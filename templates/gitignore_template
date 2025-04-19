@@ -1,0 +1,24 @@
+# === RStudio junk files ===
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata
+
+# === Data folders ===
+ # data/raw/ => track raw data. But shouldn't change
+data/processed/
+data/plots_rds/
+
+# === Output folders ===
+Output/temp/
+
+# === Temporary/backup files ===
+*.tmp
+*.log
+*.bak
+*_cache/
+
+# === System files (Windows, Mac) ===
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -12,6 +12,7 @@ read projectname
 
 # Create the project folder at the correct place
 mkdir -p "${basedir}${projectname}/R"
+mkdir -p "${basedir}${projectname}/config"
 mkdir -p "${basedir}${projectname}/figures"
 mkdir -p "${basedir}${projectname}/data/raw"
 mkdir -p "${basedir}${projectname}/data/processed"

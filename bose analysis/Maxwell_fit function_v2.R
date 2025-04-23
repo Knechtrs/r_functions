@@ -22,11 +22,11 @@ fit_maxwell_model <- function(data_StressRelax, model_type = "one", tMax) {
   # Core fitting function for both models
   fit_model <- function(df, model_type) {
     # Basic data validation
-    if (nrow(df) < 3 || !all(c("Time", "Load_norm") %in% colnames(df))) {
+    if (nrow(df) < 3 || !all(c("Time", "Stress_norm") %in% colnames(df))) {
       return(NULL)
     }
     
-    df <- df[complete.cases(df[, c("Time", "Load_norm")]), ]
+    df <- df[complete.cases(df[, c("Time", "Stress_norm")]), ]
     df <- df[df$Time > 0, ]
 
     
@@ -57,7 +57,7 @@ fit_maxwell_model <- function(data_StressRelax, model_type = "one", tMax) {
       tryCatch({
         if (model_type == "one") {
           test_fit <- nlsLM(
-            Load_norm ~ maxwell_model_one(Time, tau, A),
+            Stress_norm ~ maxwell_model_one(Time, tau, A),
             data = df,
             start = start_values,
             lower = c(0.001, 0.001),
@@ -66,7 +66,7 @@ fit_maxwell_model <- function(data_StressRelax, model_type = "one", tMax) {
           )
         } else {
           test_fit <- nlsLM(
-            Load_norm ~ maxwell_model_two(Time, tau1, tau2, A1, A2),
+            Stress_norm ~ maxwell_model_two(Time, tau1, tau2, A1, A2),
             data = df,
             start = start_values,
             lower = c(0, 0, 0, 0),
@@ -75,7 +75,7 @@ fit_maxwell_model <- function(data_StressRelax, model_type = "one", tMax) {
           )
         }
 
-        current_error <- sum((df$Load_norm - predict(test_fit))^2)
+        current_error <- sum((df$Stress_norm - predict(test_fit))^2)
         if (current_error < best_error) {
           best_error <- current_error
           best_fit <- test_fit
@@ -107,11 +107,11 @@ fit_maxwell_model <- function(data_StressRelax, model_type = "one", tMax) {
     }
 
     df_predict <- data.frame(Time = Time_vec, load_predict = load_predict)
-    residuals <- df$Load_norm - predict(best_fit, newdata = df)
+    residuals <- df$Stress_norm - predict(best_fit, newdata = df)
     df_residuals <- data.frame(Time = df$Time, residuals = residuals)
 
     # Calculate R-squared
-    ss_total <- sum((df$Load_norm - mean(df$Load_norm))^2)
+    ss_total <- sum((df$Stress_norm - mean(df$Stress_norm))^2)
     ss_residual <- sum(residuals^2)
     r_squared <- 1 - (ss_residual/ss_total)
 
@@ -199,7 +199,7 @@ plot_maxwell_fit <- function(result, data_StressRelax, tMax) {
   plot_fitted <- ggplot() +
     # Change geom_path to include mapping for the legend
     geom_path(data = data_StressRelax,
-              aes(x = Time, y = Load_norm, color = "Sample"),
+              aes(x = Time, y = Stress_norm, color = "Sample"),
               linewidth = 1.5) +
     geom_path(data = data_fitted_sliced,
               aes(x = Time, y = load_predict, color = "Fit"),

@@ -88,16 +88,17 @@ fit_maxwell_model <- function(data_StressRelax, model_type = "one", tMax) {
     if (is.null(best_fit)) return(NULL)
 
     # Generate predictions
-    Time_vec <- seq(0.01, tMax, by = 0.01)
+    # Time_vec <- seq(0.01, tMax, by = 0.01)
+    Time_vec <- df$Time
 
     if (model_type == "one") {
-      load_predict <- maxwell_model_one(
+      Stress_predict <- maxwell_model_one(
         Time_vec,
         coef(best_fit)["tau"],
         coef(best_fit)["A"]
       )
     } else {
-      load_predict <- maxwell_model_two(
+      Stress_predict <- maxwell_model_two(
         Time_vec,
         coef(best_fit)["tau1"],
         coef(best_fit)["tau2"],
@@ -106,7 +107,7 @@ fit_maxwell_model <- function(data_StressRelax, model_type = "one", tMax) {
       )
     }
 
-    df_predict <- data.frame(Time = Time_vec, load_predict = load_predict)
+    df_predict <- data.frame(Time = Time_vec, Stress_predict = Stress_predict)
     residuals <- df$Stress_norm - predict(best_fit, newdata = df)
     df_residuals <- data.frame(Time = df$Time, residuals = residuals)
 
@@ -189,7 +190,7 @@ plot_maxwell_fit <- function(result, data_StressRelax, tMax) {
   #   group_by(exp) %>%
   #   summarize(
   #     Time = max(Time) * 0.5,
-  #     load_predict = min(load_predict) + 0.1
+  #     Stress_predict = min(Stress_predict) + 0.1
   #   )
   #
   # label_positions <- fitted_params_df %>%
@@ -202,12 +203,12 @@ plot_maxwell_fit <- function(result, data_StressRelax, tMax) {
               aes(x = Time, y = Stress_norm, color = "Sample"),
               linewidth = 1.5) +
     geom_path(data = data_fitted_sliced,
-              aes(x = Time, y = load_predict, color = "Fit"),
+              aes(x = Time, y = Stress_predict, color = "Fit"),
               alpha = 1,
               linewidth = 1,
               linetype="11") +
     # geom_text(data = label_positions,
-    #           aes(x = Time, y = load_predict, label = label),
+    #           aes(x = Time, y = Stress_predict, label = label),
     #           hjust = 0, vjust = 0, size = 3) +
     facet_wrap(~ exp, nrow=2) +
     # Add scale_color_manual to control the colors and legend

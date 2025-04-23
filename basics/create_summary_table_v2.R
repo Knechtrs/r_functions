@@ -1,10 +1,14 @@
-create_summary_table <- function(data, columns, group_column) {
+create_summary_table <- function(data, columns, group_columns) {
+  
   if (!all(columns %in% names(data))) {
-    stop("Some columns not found in data.")
+    stop("Some columns for summarizing not found in data.")
+  }
+  if (!all(group_columns %in% names(data))) {
+    stop("Some group columns not found in data.")
   }
   
   data %>%
-    group_by({{group_column}}) %>%
+    group_by(across(all_of(group_columns))) %>%
     summarise(
       across(
         all_of(columns),
@@ -16,7 +20,7 @@ create_summary_table <- function(data, columns, group_column) {
       ),
       .groups = "drop"
     ) %>%
-    pivot_longer(cols = everything(), names_to = "Variable", values_to = "Value") %>%
+    pivot_longer(cols = -all_of(group_columns), names_to = "Variable", values_to = "Value") %>%
     separate(Variable, into = c("Variable", "Statistic"), sep = "__") %>%
     pivot_wider(names_from = Statistic, values_from = Value) %>%
     mutate(Mean_SD = sprintf("%.2f ± %.2f", Mean, SD))

@@ -88,7 +88,9 @@ fit_maxwell_model <- function(data_StressRelax, model_type = "one", tMax) {
     if (is.null(best_fit)) return(NULL)
 
     # Generate predictions
-    Time_vec <- seq(0.01, tMax, by = 0.01)
+    # Time_vec <- seq(0.01, tMax, by = 0.01)
+    Time_vec <- df$Time
+    
 
     if (model_type == "one") {
       load_predict <- maxwell_model_one(

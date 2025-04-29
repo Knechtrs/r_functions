@@ -2,7 +2,10 @@ Functions overview:
 - Maxwell_fit function: needed in StressRelax_curveFitting_v1. Performs maxwell fit
 	- v1: performs fit on Load_norm -> okay if all samples have same geometry
 	- v2: performs fit on stress_norm -> more general. Needed for hematoma!
-- plot_summary_points_v1: creats plot with jittered points and mean + se
+- plot_summary_points:
+	- v1: creats plot with jittered points and mean + se
+	- v2: allows now also just single column input (e.g. yvar=Emod, w/o defining xvar)
+	- v3: FontSize, PointSize, LineWidth are now a global parameter
 - Plotting_Point_Stat: same as plot_summary_points, but less flexible and versatile. Don't use
 - Plotting_LoadTime_v1: Plots data check plots for bose data. xvar and yvar can be chosen. Versatile!
 - Butterworth_filtering_v1: filters noisy bose signal

@@ -1,12 +1,21 @@
-theme_fontsize <- function (base_size = 6) 
-{
-    theme(text = element_text(size = base_size, color = "black"), 
-        axis.title = element_text(size = base_size, color = "black"), 
-        axis.text = element_text(size = base_size, color = "black"), 
-        plot.title = element_text(size = base_size, color = "black"), 
-        # strip.title= element_text(size = base_size, color= "black"),
-        strip.text.x = element_text(size = base_size, color = "black"),  
-        strip.text.y = element_text(size = base_size, color = "black"), 
-        legend.text = element_text(size = base_size, color = "black"), 
-        legend.title = element_text(size = base_size, color = "black"))
+theme_fontsize <- function(base_size = 6) {
+  
+  # dynamically adapt margins
+  margin_size <- max(5.5, base_size * 1.2)
+  
+  theme(
+    text = element_text(size = base_size),
+    axis.title = element_text(size = base_size),
+    axis.text = element_text(size = base_size),
+    plot.title = element_text(size = base_size),
+    strip.text = element_text(size = base_size),
+    legend.text = element_text(size = base_size),
+    legend.title = element_text(size = base_size),
+    plot.margin = margin(
+      t = margin_size,
+      r = margin_size,
+      b = margin_size,
+      l = margin_size
+    )
+  )
 }

@@ -1,0 +1,11 @@
+theme:
+  fontfamily: "Arial"
+  FontSize: 18
+  PointSize: 5
+  LineWidth: 1
+
+scaling_factors:
+  title: 1
+  axistext: 1
+  legendtext: 1
+ 

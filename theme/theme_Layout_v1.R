@@ -6,6 +6,12 @@ theme_Layout <- theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     axis.line.x = element_line(linewidth = 0.5, color="black"),
-    axis.line.y = element_line(linewidth = 0.5, color="black")    
-
+    axis.line.y = element_line(linewidth = 0.5, color="black"),
+    text = element_text(color = "black"),
+    axis.title = element_text(color = "black"),
+    axis.text = element_text(color = "black"),
+    plot.title = element_text(color = "black"),
+    legend.text = element_text(color = "black"),
+    legend.title = element_text(color = "black"),
+    strip.text = element_text(color = "black")
 )

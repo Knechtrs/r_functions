@@ -1,0 +1,215 @@
+Add_stat_test_dodge <- function(
+    plot, 
+    yData,
+    Group,  # groups to compare for stat test, set to NULL when only dodged!
+    Dodge = NULL, # column name of dodge variable
+    statGroup_by = NULL, # if dodge and group are the same: need to define group_by variable for stat.test
+    test = "t.test",
+    Facet = NULL, # column name for faceting
+    paired = FALSE, # paired data? => set to TRUE and need to define paired id => id
+    id = NULL, # paired id, indicating which pairs to compare
+    FontSize = 12,
+    yPosition = NULL # if you want to set y-position of p-value label manually
+    ) {
+ 
+plot = Plot_Markers
+yData = "MFI"
+Group = "Alginate"
+Dodge = "Alginate"
+test = "t.test"
+Facet = "Marker"
+paired = TRUE
+statGroup_by = "RGD"
+id = "Donor"
+
+   
+  # Extract data from ggplot object
+  df <- plot$data
+  
+  #---- rename column names ----#
+  # create function to rename column names so they are always the same
+  rename_Col <- function(df, Name, NewName) {
+    if (!is.null(Name)) {
+      df <- df %>%
+        dplyr::rename(!!NewName := !!rlang::sym(Name))
+    }
+    return(df)
+  }
+  
+  # apply rename function: rename column names
+  df <- df %>%
+    rename_Col(Name = yData, NewName = "yData_col") %>%
+    rename_Col(Name = Facet, NewName = "Facet_col")
+  
+  # check if group and dodge column are the same
+  if (!is.null(Dodge) && Group == Dodge) {
+    # Explicit duplication if Group == Dodge
+    df <- rename_Col(df, Name = Dodge, NewName = "Dodge_col")
+    df <- df %>% dplyr::mutate(Group_col = Dodge_col)
+    df <- rename_Col(df, Name = statGroup_by, NewName ="statGroup_by")
+  } else {
+  df <- df %>% 
+    rename_Col(Name = Dodge, NewName = "Dodge_col") %>%
+    rename_Col(Name = Group, NewName = "Group_col")
+  }
+  
+  # Add 'id' if provided and needed: for paired testing
+  if (!is.null(id) && paired) {
+    df <- df %>% rename_Col(Name = id, NewName = "ID_Col")
+  }
+  
+  #---- stat test ----#
+  formula <- stats::as.formula("yData_col ~ Group_col")
+  
+  # Choose the test function based on input
+  test_fun <- switch(test,
+                     "t.test" = rstatix::t_test,
+                     "wilcox.test" = rstatix::wilcox_test,
+                     stop("Invalid test specified. Use 't.test' or 'wilcox.test'.")
+  )
+  
+  ## Determine base grouping structure ##
+  group_vars <- c()
+  
+  # # set for paired:
+  # if (paired && !is.null(id)) {
+  #   group_vars <- c(group_vars, "ID_Col")  # always include ID, when paired
+  # }
+  
+  if (!is.null(Facet)) {
+    group_vars <- c(group_vars, "Facet_col")  # always include Facet_col, when faceted
+  }
+  
+  # set dodge and group:
+  if (!is.null(statGroup_by)) { # dodge == group
+    group_vars <- c(group_vars, "statGroup_by")
+  } else if (!is.null(Dodge) && Group != Dodge){ # dodge != group
+    group_vars <- c(group_vars, "Group_col")
+  } else if (!is.null(Dodge) && is.null(Group)){ #only dodge
+    group_vars <- c(group_vars, "Dodge_col")
+  } else if (!is.null(Group) && is.null(Dodge)) {# only group
+    group_vars <- c(group_vars, "Group_col")
+  } 
+  
+  # Apply test
+  if (length(group_vars) > 0) {
+    stat.test <- df %>%
+      dplyr::group_by(!!!rlang::syms(group_vars)) %>%
+      test_fun(formula, paired = paired)
+  } else {
+    stat.test <- test_fun(df, formula, paired = paired)
+  }
+ 
+  #----- Add significance and plot position ----#
+  if(!is.null(statGroup_by)){ # need to calculate x-position differently, when dodge=group
+    stat.test <- stat.test %>%
+      rstatix::add_significance() %>%
+      add_xy_position(x = "statGroup_by", fun = "max", dodge = plot$layers[[1]]$position$dodge.width) %>%
+      dplyr::mutate(
+        yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
+        p_formatted = format_pvalue(p)
+      )
+  } else { # if dodge != group
+    stat.test <- stat.test %>%
+      rstatix::add_significance() %>%
+      add_xy_position(x = "Group_col", fun = "max") %>%
+      dplyr::mutate(
+        yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
+        p_formatted = format_pvalue(p)
+      )
+  }
+  
+  #---- for facet_wrap: re-calculate y.position ----#
+  if(!is.null(Facet)) {
+    if(!is.null(statGroup_by)) { # if dodge = Group: also group by statGroup_by
+      # Step 1: Calculate max y per facet from the original data
+      y_max_per_facet <- df %>%
+        dplyr::group_by(Facet_col, statGroup_by) %>%
+        dplyr::summarise(y_max = max(yData_col, na.rm = TRUE), .groups = "drop")
+      
+      # Step 2: Join to stat.test
+      stat.test <- stat.test %>%
+        dplyr::left_join(y_max_per_facet, by = c("Facet_col", "statGroup_by")) %>% 
+        mutate(
+          yMax = if (!is.null(yPosition)) yPosition else y_max * 1.05 ) %>% # 1.05 adds little space between max value and bracket. 
+        select(-y_max)
+      
+    } else { # if dodge != group
+      # Step 1: Calculate max y per facet from the original data
+      y_max_per_facet <- df %>%
+        dplyr::group_by(Facet_col) %>%
+        dplyr::summarise(y_max = max(yData_col, na.rm = TRUE), .groups = "drop")
+      
+      # Step 2: Join to stat.test
+      stat.test <- stat.test %>%
+        dplyr::left_join(y_max_per_facet, by = "Facet_col") %>%
+        mutate(
+          yMax = if (!is.null(yPosition)) yPosition else y_max * 1.05 ) %>% # 1.05 adds little space between max value and bracket. 
+        select(-y_max)
+    }
+    
+  # need to rename column, so stat_pvalue_manual knows it for faceting
+  stat.test <- stat.test %>%
+    dplyr::rename(!!Facet_col := !!rlang::sym("Facet_col"))
+    # dplyr::rename(Parameter = Facet_col)
+  }
+  
+  #---- for doge: re-calculate x-positions for dodge != group ----#
+  if(!is.null(Dodge)) { 
+    if(!is.null(statGroup_by)) {
+      stat.test <- stat.test
+    } else {
+      stat.test <- stat.test %>%
+        add_xy_position(x = "Group_col", fun = "max", dodge = plot$layers[[1]]$position$dodge.width, group = "Dodge_col") %>% 
+        dplyr::mutate(
+          yMax = y.position +
+            0 +  # base bump
+            as.numeric(factor(Dodge_col)) * 0.15  # additional offset per group
+        )
+    }
+  }
+  
+  #---- # need to rename statGroup_by, so it is the same as in plot metadata ----#
+  if(!is.null(statGroup_by)) {
+    stat.test <- stat.test %>%
+      dplyr::rename(!!statGroup_by := !!rlang::sym("statGroup_by"))
+  }
+  
+  #---- add labels to plot ----# 
+  
+  # Set linetype and tip.length first: add line if comp across group factor and not dodge
+  linetype_val <- if (!is.null(Dodge) && is.null(statGroup_by)) "solid" else "blank"
+  tip_length_val <- if (linetype_val == "solid") 0.05 else 0
+  
+  # Base plot with stat_pvalue_manual
+  Plot_out <- plot +
+    ggpubr::stat_pvalue_manual(
+      data = stat.test,
+      label = "p_formatted",
+      y.position = "yMax",
+      xmin = "xmin",
+      xmax = "xmax",
+      inherit.aes = FALSE,
+      vjust = -0.25,
+      linetype = linetype_val,
+      tip.length = tip_length_val,
+      size = FontSize / 2.835
+    )
+  
+  # Conditionally add y scale
+  if (!is.null(Dodge)) {
+    Plot_out <- Plot_out + scale_y_continuous(limits = c(0, stat.test$y.position * 1.4))
+  } else if (is.null(Dodge) && is.null(Facet)) {
+    Plot_out <- Plot_out + scale_y_continuous(limits = c(0, stat.test$y.position * 1.2))
+  }
+  
+  # Final plot
+  Plot_out
+  
+  # Return result
+  return(list(
+    Plot = Plot_out,
+    data_stat = stat.test
+  ))
+  
+}

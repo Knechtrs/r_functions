@@ -68,7 +68,7 @@ source(here(path_Rfunctions,"theme", "theme_Layout_v1.R"))
 ```
 
 ```{r}
-source(here(path_Rfunctions,"bose analysis", "plot_summary_points_v3.R"))
+source(here(path_Rfunctions,"basics", "plot_summary_points_v3.R"))
 ```
 
 ## load functions from local folder

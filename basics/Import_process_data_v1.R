@@ -11,8 +11,8 @@ Names_list.csv <- list.csv %>%
   str_remove("\\.csv$|\\.CSV$")  # remove .csv extension only
 
 # create list with files
-list_data <- list.csv %>% 
-  map(read_csv, skip=19) %>% # skip first 19 rows wit meta.data
+list_data <- list.csv %>%
+  map(~ readr::read_csv(.x, show_col_types = FALSE)) %>%
   setNames(Names_list.csv) # add filename to the list items
 
 # bind list to dataframe

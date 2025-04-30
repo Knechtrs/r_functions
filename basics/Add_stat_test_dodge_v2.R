@@ -11,17 +11,6 @@ Add_stat_test_dodge <- function(
     FontSize = 12,
     yPosition = NULL # if you want to set y-position of p-value label manually
     ) {
- 
-plot = Plot_Markers
-yData = "MFI"
-Group = "Alginate"
-Dodge = "Alginate"
-test = "t.test"
-Facet = "Marker"
-paired = TRUE
-statGroup_by = "RGD"
-id = "Donor"
-
    
   # Extract data from ggplot object
   df <- plot$data

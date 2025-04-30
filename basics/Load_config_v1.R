@@ -13,7 +13,7 @@ params <- load_param(default_file = here("config", "params_v1.yaml"))
 # params <- load_param(override_file = here("config", "theme_settings_poster_v1.yaml"))
 
 # Publication
-params <- load_param(override_file = here("config", "theme_settings_publication_v1.yaml"))
+# params <- load_param(override_file = here("config", "theme_settings_publication_v1.yaml"))
 
 
 #---- Set theme settings ----# 

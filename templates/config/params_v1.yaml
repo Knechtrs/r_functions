@@ -1,10 +1,10 @@
 experiment_name: "2025-02-26_Project Relax_Hematoma"
 
 theme: 
-    - fontfamily: "Arial"
-    - FontSize: 10
-    - pointsize: 1
-    - linewidth: 1
+  fontfamily: "Arial"
+  FontSize: 10
+  PointSize: 1
+  LineWidth: 1
 
 scaling_factors:
   title: 1.2
@@ -26,11 +26,11 @@ metaData:
   - PatientNumber
   
 RemoveSample: 
-    - "Z Patient 006" # too noisy
-   # - "C Patient 001"
-    - "G Patient 012" # dpi not clearly noted
-    - "F Patient 009" # too old: dpi 12
-   # - "J Patient 13A"
+  - "Z Patient 006" # too noisy
+#  - "C Patient 001"
+  - "G Patient 012" # dpi not clearly noted
+  - "F Patient 009" # too old: dpi 12
+#  - "J Patient 13A"
 
 FilterParams:
   order: 2

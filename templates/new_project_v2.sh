@@ -71,26 +71,26 @@ else
   echo "Warning: Config templates folder not found!"
 fi
 
-#--------------------------
-# 5. Copy default R scripts
-#--------------------------
+# #--------------------------
+# # 5. Copy default R scripts
+# #--------------------------
 
-# Define source directories
-rbasics="/c/Users/knechtrs/OneDrive - Charité - Universitätsmedizin Berlin/Data_analysis/R_functions/basics"
-rtheme="/c/Users/knechtrs/OneDrive - Charité - Universitätsmedizin Berlin/Data_analysis/R_functions/theme"
+# # Define source directories
+# rbasics="/c/Users/knechtrs/OneDrive - Charité - Universitätsmedizin Berlin/Data_analysis/R_functions/basics"
+# rtheme="/c/Users/knechtrs/OneDrive - Charité - Universitätsmedizin Berlin/Data_analysis/R_functions/theme"
 
-# Copy to scripts/utilities
-cp "${rbasics}/create_summary_table_v2.R" "${basedir}${projectname}/scripts/utilities/"
-cp "${rbasics}/Load_config_v1.R" "${basedir}${projectname}/scripts/utilities/"
-cp "${rbasics}/Load_param_v1.R" "${basedir}${projectname}/scripts/utilities/"
+# # Copy to scripts/utilities
+# cp "${rbasics}/create_summary_table_v2.R" "${basedir}${projectname}/scripts/utilities/"
+# cp "${rbasics}/Load_config_v1.R" "${basedir}${projectname}/scripts/utilities/"
+# cp "${rbasics}/Load_param_v1.R" "${basedir}${projectname}/scripts/utilities/"
 
-# Copy to scripts/plotting
-cp "${rbasics}/Add_stat_test_dodge_v1.R" "${basedir}${projectname}/scripts/plotting/"
-cp "${rbasics}/format_pvalue_v1.R" "${basedir}${projectname}/scripts/plotting/"
-cp "${rbasics}/plot_summary_points_v3.R" "${basedir}${projectname}/scripts/plotting/"
-cp "${rtheme}/theme_fontsize_v1.R" "${basedir}${projectname}/scripts/plotting/"
+# # Copy to scripts/plotting
+# cp "${rbasics}/Add_stat_test_dodge_v1.R" "${basedir}${projectname}/scripts/plotting/"
+# cp "${rbasics}/format_pvalue_v1.R" "${basedir}${projectname}/scripts/plotting/"
+# cp "${rbasics}/plot_summary_points_v3.R" "${basedir}${projectname}/scripts/plotting/"
+# cp "${rtheme}/theme_fontsize_v1.R" "${basedir}${projectname}/scripts/plotting/"
 
-echo "Default R scripts copied to utilities/ and plotting/ folders."
+# echo "Default R scripts copied to utilities/ and plotting/ folders."
 
 #--------------------------
 # 6. Create .Rproj file

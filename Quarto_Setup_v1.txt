@@ -1,0 +1,91 @@
+
+```{r}
+# # only run once at the beginning
+# library(renv)
+# renv::init()
+# renv::restore()
+
+library(ggplot2)
+library(tidyverse)
+library(readxl)
+library(cowplot)
+library(scales)
+library(RColorBrewer)
+library(ggh4x)
+library(forcats)
+library(ggtext)
+library(ggrepel)
+library(plotrix) ## neded for std.error calculation
+library(minpack.lm)
+library(rstatix)
+library(ggpubr)
+library(ggpp)
+library(ggforce)
+library(yaml)
+library(here)
+library(sessioninfo)
+```
+
+```{r}
+# # if you add new packages or to initalize:
+# renv::snapshot()
+```
+
+# Load configurations (yaml) and functions
+
+```{r}
+source(here("R", "load_param_v1.R"))
+```
+
+```{r}
+source(here("R", "Load_config_v1.R"))
+```
+
+## load functions from R_function folder
+
+### basics
+
+```{r}
+source(here(path_Rfunctions,"basics", "Add_stat_test_dodge_v1.R"))
+```
+
+```{r}
+source(here(path_Rfunctions,"basics", "create_summary_table_v2.R"))
+```
+
+```{r}
+source(here(path_Rfunctions,"basics", "format_pvalue_v1.R"))
+```
+
+### theme
+
+```{r}
+source(here(path_Rfunctions,"theme", "theme_fontsize_v1.R"))
+```
+
+```{r}
+source(here(path_Rfunctions,"theme", "theme_Layout_v1.R"))
+```
+
+```{r}
+source(here(path_Rfunctions,"bose analysis", "plot_summary_points_v3.R"))
+```
+
+## load functions from local folder
+
+```{r}
+source(here("figures", "Plotting_LoadTime_v1.R"))
+```
+
+# Create output directory
+
+```{r}
+dir.create(here("Output", "final_figures", "version_1"), recursive = TRUE, showWarnings = FALSE)
+```
+
+set output directory for plots:
+
+```{r}
+Output_dir <- here("Output", "final_figures", "version_1")
+dir.create(here(Output_dir, "RDS"), recursive = TRUE, showWarnings = FALSE)
+```

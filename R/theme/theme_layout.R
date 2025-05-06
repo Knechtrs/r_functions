@@ -1,4 +1,4 @@
-theme_Layout <- theme(
+theme_layout <- theme(
     plot.background = element_rect(fill="white", color="white"),
     panel.background = element_rect(fill="white", color="white"),
     legend.background = element_rect(fill="white", color="white"),

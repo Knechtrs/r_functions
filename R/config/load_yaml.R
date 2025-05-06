@@ -1,4 +1,4 @@
-load_param <- function(default_file = here("config", "params_v1.yaml"), 
+load_yaml <- function(default_file = here("config", "params_v1.yaml"), 
                                 override_file = NULL) {
   # Load default
   settings <- yaml::read_yaml(default_file)

@@ -1,34 +1,58 @@
-# Project Title
+# Data Analysis Project Template
 
-Short description of the project.
+This repository follows a standardized structure for data analysis project, designed for reproducibility, modularity, and clarity.
 
 ## Project Structure
 
-- `R/` – custom functions
-- `config/` - input variables
-- `figures/` – plotting scripts
-- `data/raw/` – raw input data
-- `data/processed/` – cleaned/processed data
-- `data/plots_rds/` – saved ggplot objects
-- `Output/final_figures/` – final publication-ready plots
-- `Output/temp/` – temporary plots (ignored by git)
-- `scripts/` – analysis scripts
-- `reports/` – knitted reports
+```
+project_root/
+├── config/                  # YAML configuration and theme settings
+│   ├── params_v1.yaml
+│   ├── theme_settings_poster_v1.yaml
+│   ├── theme_settings_ppt_v1.yaml
+│   └── theme_settings_publication_v1.yaml
+│
+├── data/                    # All input data and derived intermediate data
+│   ├── raw/                 # Unmodified source data
+│   ├── metadata/            # Data dictionaries or annotations
+│   └── processed/           # Cleaned or transformed datasets
+│
+├── outputs/                 # All analysis outputs
+│   ├── figures_raw/         # Diagnostic or exploratory plots
+│   ├── figures_final/       # Final publication-ready plots
+│   ├── tables/              # Result tables, CSVs, RDS, etc.
+│   └── temp/                # Temporary or cached files
+│
+├── reports/                 # Quarto notebooks, PDFs, manuscripts
+│
+├── scripts/                 # Code modules used for the analysis
+│   ├── analysis/            # Main analysis workflow scripts
+│   ├── data_processing/     # Data wrangling and cleaning
+│   ├── plotting/            # Plot-generating functions and layouts
+│   └── utilities/           # Helpers, stat tests, shared functions
+│
+├── .gitignore               # Git version control exclusions
+├── README.md                # This file
+└── your_project.Rproj       # RStudio project file
+```
 
-## Setup
+## Usage Notes
 
-## Version history
+- All reusable functions or modules go into `scripts/` subfolders based on purpose.
+- Use `here::here()` to construct file paths reliably across systems.
+- Place raw data files only in `data/raw/` and never modify them.
+- Use `outputs/` for all generated content to keep inputs and outputs cleanly separated.
 
-- v1.0: Initial setup
+## Getting Started
 
-## restore version using renv::restore()
+1. Set up your config files in `config/`
+2. Add raw data to `data/raw/` and write processing logic in `scripts/data_processing/`
+3. Write your analysis in `scripts/analysis/` and reporting in `reports/`
+4. Save all output content to `outputs/`
 
-## How to Run:
-- go to: C:\Users\knechtrs\OneDrive - Charité - Universitätsmedizin Berlin\Data_analysis\R_functions\templates
-- double click on new_project.sh
-- enter which data analysis subfolder folder should be created
-- enter new folder name
+## Versioning and Environment
 
-- open r-project
-- tools -> version control -> change to git # changes will be tracked by git, except folders defined in gitignore
-- if you made changes or first set-up: go to git tab (top right), stage files and commit (#add comment, e.g. initilize)
+- Use Git to track changes.
+
+## Authors
+Raphael S Knecht (May 2025)

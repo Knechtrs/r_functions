@@ -3,22 +3,47 @@
 .RData
 .Rproj.user/
 .Ruserdata
+*.Rproj
+
+# === Quarto & Knitr cache and intermediates ===
+*_cache/
+*_files/
+*.utf8.md
+*.knit.md
+
+# === renv (local state, lockfile should be committed) ===
+renv/library/
+renv/python/
+.Renviron
+
+# === Output & results ===
+outputs/temp/
+outputs/*.rds
+outputs/*.RDS
+outputs/*.pdf
+outputs/*.png
+outputs/*.svg
+outputs/*.csv
+outputs/*.tsv
+outputs/*.html
+outputs/*.xlsx
+outputs/figures_raw/
+outputs/figures_final/
+outputs/tables/
 
 # === Data folders ===
- # data/raw/ => track raw data. But shouldn't change
 data/processed/
 data/plots_rds/
-
-# === Output folders ===
-Output/temp/
+data/temp/
 
 # === Temporary/backup files ===
 *.tmp
 *.log
 *.bak
-*_cache/
+*.swp
+*~
 
-# === System files (Windows, Mac) ===
+# === System files ===
 .DS_Store
 Thumbs.db
 desktop.ini

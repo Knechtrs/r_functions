@@ -1,8 +1,9 @@
-Add_stat_test_dodge <- function(
+add_stat_test_dodge <- function(
     plot, 
     yData,
     Group,  # groups to compare for stat test, set to NULL when only dodged!
     Dodge = NULL, # column name of dodge variable
+    dodge_width = NULL, # need to specify dodge_width if using plot_paired_points.v1
     statGroup_by = NULL, # if dodge and group are the same: need to define group_by variable for stat.test
     test = "t.test",
     Facet = NULL, # column name for faceting
@@ -11,7 +12,7 @@ Add_stat_test_dodge <- function(
     FontSize = 12,
     yPosition = NULL # if you want to set y-position of p-value label manually
     ) {
-   
+  
   # Extract data from ggplot object
   df <- plot$data
   
@@ -93,7 +94,7 @@ Add_stat_test_dodge <- function(
   if(!is.null(statGroup_by)){ # need to calculate x-position differently, when dodge=group
     stat.test <- stat.test %>%
       rstatix::add_significance() %>%
-      add_xy_position(x = "statGroup_by", fun = "max", dodge = plot$layers[[1]]$position$dodge.width) %>%
+      add_xy_position(x = "statGroup_by", fun = "max", dodge = if (!is.null(dodge_width)) dodge_width else plot$layers[[1]]$position$dodge.width) %>%
       dplyr::mutate(
         yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
         p_formatted = format_pvalue(p)
@@ -115,7 +116,6 @@ Add_stat_test_dodge <- function(
       y_max_per_facet <- df %>%
         dplyr::group_by(Facet_col, statGroup_by) %>%
         dplyr::summarise(y_max = max(yData_col, na.rm = TRUE), .groups = "drop")
-      
       # Step 2: Join to stat.test
       stat.test <- stat.test %>%
         dplyr::left_join(y_max_per_facet, by = c("Facet_col", "statGroup_by")) %>% 
@@ -139,8 +139,7 @@ Add_stat_test_dodge <- function(
     
   # need to rename column, so stat_pvalue_manual knows it for faceting
   stat.test <- stat.test %>%
-    dplyr::rename(!!Facet_col := !!rlang::sym("Facet_col"))
-    # dplyr::rename(Parameter = Facet_col)
+    dplyr::rename(!!Facet := Facet_col)
   }
   
   #---- for doge: re-calculate x-positions for dodge != group ----#
@@ -185,11 +184,13 @@ Add_stat_test_dodge <- function(
       size = FontSize / 2.835
     )
   
-  # Conditionally add y scale
-  if (!is.null(Dodge)) {
-    Plot_out <- Plot_out + scale_y_continuous(limits = c(0, stat.test$y.position * 1.4))
-  } else if (is.null(Dodge) && is.null(Facet)) {
-    Plot_out <- Plot_out + scale_y_continuous(limits = c(0, stat.test$y.position * 1.2))
+  # Extend y scale
+  if (!is.null(Dodge)) { # just dodge
+    Plot_out <- Plot_out + 
+      scale_y_continuous(limits = c(0,NA), expand = expansion(mult=c(0,0.4)))
+  } else if (is.null(Dodge) && is.null(Facet)) { # dodge and facet
+    Plot_out <- Plot_out + 
+      scale_y_continuous(limits = c(0,NA), expand = expansion(mult=c(0,0.2)))
   }
   
   # Final plot

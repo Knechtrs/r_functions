@@ -1,62 +1,58 @@
+#!/bin/bash
 
-# Ask for data analysis subfolder: 
-echo "Define data analysis subfolder:"
-read subfolder
+# -----------------------------------------------
+# AG Duda / Raphael Knecht — New Project Scaffold
+# Sets up folders, templates, and utility scripts
+# Cross-platform compatible (Windows/macOS/Linux)
+# -----------------------------------------------
 
-# Define the base directory where new projects should be created
-basedir="/c/Users/knechtrs/OneDrive - Charité - Universitätsmedizin Berlin/Data_analysis/${subfolder}/"
+# === 1. Prompt user for input ===
 
-# Ask for project name
-echo "Enter new project folder name:"
-read projectname
+read -p "Define data analysis subfolder (e.g. fracture, macrophage, etc.): " subfolder
+subfolder=${subfolder:-"general"}
 
-# Create the project folder at the correct place
-mkdir -p "${basedir}${projectname}/R"
-mkdir -p "${basedir}${projectname}/config"
-mkdir -p "${basedir}${projectname}/figures"
-mkdir -p "${basedir}${projectname}/data/raw"
-mkdir -p "${basedir}${projectname}/data/processed"
-mkdir -p "${basedir}${projectname}/data/plots_rds"
-mkdir -p "${basedir}${projectname}/Output/final_figures/version_1"
-mkdir -p "${basedir}${projectname}/Output/temp"
-mkdir -p "${basedir}${projectname}/scripts"
-mkdir -p "${basedir}${projectname}/reports"
-
-# Set template directory manually (absolute path)
-templatedir="/c/Users/knechtrs/OneDrive - Charité - Universitätsmedizin Berlin/Data_analysis/R_functions/templates"
-
-# Create README file
-if [ -f "${templatedir}/README_template.md" ]; then
-  cp "${templatedir}/README_template.md" "${basedir}${projectname}/README.md"
-  echo "README template copied."
-else
-  echo "Warning: No README_template.md found!"
+read -p "Enter new project folder name: " projectname
+if [ -z "$projectname" ]; then
+  echo "ERROR: Project name is required. Exiting."
+  exit 1
 fi
 
-# Copy .gitignore template
-if [ -f "${templatedir}/gitignore_template" ]; then
-  cp "${templatedir}/gitignore_template" "${basedir}${projectname}/.gitignore"
-  echo ".gitignore template copied."
-else
-  echo "Warning: No gitignore_template found!"
-fi
+# === 2. Define Paths (Windows-safe) ===
 
-# Create .Rproj file
-cat > "${basedir}${projectname}/${projectname}.Rproj" << EOL
-Version: 1.0
+real_home="$(cd "$USERPROFILE" && pwd)"
+userbase="${real_home}/OneDrive - Charité - Universitätsmedizin Berlin/Data_analysis"
+basedir="${userbase}/${subfolder}"
+projectdir="${basedir}/${projectname}"
+rfunctions="${userbase}/R_functions/R"
 
-RestoreWorkspace: No
-SaveWorkspace: No
-AlwaysSaveHistory: Default
+echo "Detected real home: $real_home"
+echo "Using userbase: $userbase"
 
-EnableCodeIndexing: Yes
-UseSpacesForTab: Yes
-NumSpacesForTab: 2
-Encoding: UTF-8
+# === 3. Create Folder Structure ===
 
-RnwWeave: knitr
-LaTeX: pdfLaTeX
-EOL
+mkdir -p "${projectdir}"/{config,data/{raw,metadata,processed},outputs/{figures_raw,figures_final,tables,temp},reports,scripts/{analysis,data_processing,plotting,utilities}}
 
-echo ".Rproj project file created."
-echo "Project '${projectname}' created successfully in ${basedir}"
+echo "Created folder structure in: ${projectdir}"
+
+# === 4. Copy Template Files ===
+
+cp "${userbase}/R_functions/templates/quarto_template.qmd" "${projectdir}/reports/" 2>/dev/null
+cp "${userbase}/R_functions/templates/gitignore_template" "${projectdir}/.gitignore" 2>/dev/null
+cp "${userbase}/R_functions/templates/README_template.md" "${projectdir}/README.md" 2>/dev/null
+cp "${rfunctions}/config/"*.yaml "${projectdir}/config/" 2>/dev/null
+
+echo "Template files copied to project folder."
+
+# === 5. Git Init ===
+cd "${projectdir}"
+git init
+echo "Initialized empty Git repository."
+
+# === 6. renv Setup ===
+echo "renv::init()" > "${projectdir}/scripts/init_renv.R"
+echo "Added renv init script."
+
+# === Done ===
+echo "Project '${projectname}' is ready at: ${projectdir}"
+echo "Press any key to exit..."
+read -n 1 -s

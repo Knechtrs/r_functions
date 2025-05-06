@@ -59,7 +59,3 @@ source(here("R/theme/theme_layout.R"))
 output_dir <- here("outputs", "figures_final", "version_1")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 ```
-
-```{r}
-print("test2")
-```

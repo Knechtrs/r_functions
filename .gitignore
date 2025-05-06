@@ -26,7 +26,6 @@ __pycache__/
 # === Templates and Scaffolds (if not user-edited) ===
 templates/gitignore_template
 templates/new_project.sh
-templates/quarto_template.qmd
 templates/README_template.md
 templates/config/
 

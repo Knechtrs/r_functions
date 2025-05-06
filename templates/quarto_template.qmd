@@ -59,3 +59,33 @@ source(here("R/theme/theme_layout.R"))
 output_dir <- here("outputs", "figures_final", "version_1")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 ```
+
+## Load Configurations and Theme Parameters
+
+```{r load-config}
+# Load default param.yaml
+params <- load_yaml(default_file = here("config", "params.yaml"))
+
+# # Optionally override theme settings
+# # PowerPoint
+# params <- load_param(override_file = here("config", "theme_settings_ppt.yaml"))
+# # Poster
+# params <- load_param(override_file = here("config", "theme_settings_poster.yaml"))
+# # Publication
+# params <- load_param(override_file = here("config", "theme_settings_publication.yaml"))
+
+# Set theme parameters
+FontSize <- params$theme$FontSize
+PointSize <- params$theme$PointSize
+LineWidth <- params$theme$LineWidth
+Color.Gels <- params$Color.Gels
+```
+
+# Define path to Rfunctions
+
+```{r}
+# Define path to R_functions
+path_Data_analysis <- stringr::str_extract(here::here(), ".*Data_analysis")
+path_Rfunctions <- file.path(path_Data_analysis, "R_functions")
+```
+

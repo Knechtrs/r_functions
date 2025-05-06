@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # === RStudio and R environment ===
 .Rhistory
 .RData
@@ -37,3 +38,9 @@ dev/
 *.svg
 *.xlsx
 *.html
+=======
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+>>>>>>> 9e8c0eb (# nothing)

@@ -1,0 +1,65 @@
+---
+title: "Analysis Template"
+author: "Your Name"
+date: today
+format: html
+editor: visual
+---
+
+```{r setup}
+# ---- Load libraries ----
+library(here)
+library(tidyverse)      # includes dplyr, ggplot2, readr, etc.
+library(ggtext)
+library(ggrepel)
+library(ggpubr)
+library(rstatix)
+library(yaml)
+library(cowplot)
+library(sessioninfo)
+
+# ---- renv management ----
+# This project already has renv initialized via setup script.
+# If you install new packages, run:
+#   install.packages("pkgname")
+#   renv::snapshot()
+```
+
+## Load Configurations
+
+```{r}
+source(here("R/config/load_yaml.R"))
+```
+
+## Load Core Functions
+
+```{r}
+source(here("R/core/create_summary_table.R"))
+source(here("R/core/format_pvalue.R"))
+```
+
+## Load Plotting Tools
+
+```{r}
+source(here("R/plotting/add_stat_test_dodge.R"))
+source(here("R/plotting/plot_paired_points.R"))
+source(here("R/plotting/plot_summary_points.R"))
+```
+
+## Load Custom Themes
+
+```{r}
+source(here("R/theme/theme_fontsize.R"))
+source(here("R/theme/theme_layout.R"))
+```
+
+## Output Directories
+
+```{r}
+output_dir <- here("outputs", "figures_final", "version_1")
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r}
+print("test2")
+```

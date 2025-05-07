@@ -7,6 +7,10 @@ editor: visual
 ---
 
 ```{r setup}
+
+# # restore r-environment with loaded pacakges. At project-initialization this has already been done.
+# renv::restore()
+
 # ---- Load libraries ----
 library(here)
 library(tidyverse)      # includes dplyr, ggplot2, readr, etc.
@@ -85,4 +89,29 @@ FontSize <- params$theme$FontSize
 PointSize <- params$theme$PointSize
 LineWidth <- params$theme$LineWidth
 Color.Gels <- params$Color.Gels
+```
+
+# Import data from data/raw folder
+
+```{r}
+
+# get list with data files
+list.csv <- list.files(path = here("data/raw"), pattern = "\\.csv|\\.CSV", recursive=FALSE, full.names=TRUE) 
+
+# Create clean names
+Names_list.csv <- list.csv %>%
+  basename() %>%                # remove full folder path
+  str_remove("\\.csv$|\\.CSV$")  # remove .csv extension only
+
+# create list with files
+list_data <- list.csv %>% 
+  map(read_delim, delim=";") %>% # skip first row with meta.data
+  setNames(Names_list.csv) # add filename to the list items
+
+# check out problems
+map(list_data, ~problems(.x))
+
+# bind list to dataframe
+df_data_raw <- list_data %>% 
+  bind_rows(.id="exp") 
 ```

@@ -28,29 +28,35 @@ library(sessioninfo)
 ## Load Configurations
 
 ```{r}
-source(here("R/config/load_yaml.R"))
+# Define path to R_functions
+path_Data_analysis <- stringr::str_extract(here::here(), ".*Data_analysis")
+path_Rfunctions <- file.path(path_Data_analysis, "R_functions")
+```
+
+```{r}
+source(here(path_Rfunctions, "R/config/load_yaml.R"))
 ```
 
 ## Load Core Functions
 
 ```{r}
-source(here("R/core/create_summary_table.R"))
-source(here("R/core/format_pvalue.R"))
+source(here(path_Rfunctions, "R/core/create_summary_table.R"))
+source(here(path_Rfunctions, "R/core/format_pvalue.R"))
 ```
 
 ## Load Plotting Tools
 
 ```{r}
-source(here("R/plotting/add_stat_test_dodge.R"))
-source(here("R/plotting/plot_paired_points.R"))
-source(here("R/plotting/plot_summary_points.R"))
+source(here(path_Rfunctions, "R/plotting/add_stat_test_dodge.R"))
+source(here(path_Rfunctions, "R/plotting/plot_paired_points.R"))
+source(here(path_Rfunctions, "R/plotting/plot_summary_points.R"))
 ```
 
 ## Load Custom Themes
 
 ```{r}
-source(here("R/theme/theme_fontsize.R"))
-source(here("R/theme/theme_layout.R"))
+source(here(path_Rfunctions, "R/theme/theme_fontsize.R"))
+source(here(path_Rfunctions, "R/theme/theme_layout.R"))
 ```
 
 ## Output Directories
@@ -80,12 +86,3 @@ PointSize <- params$theme$PointSize
 LineWidth <- params$theme$LineWidth
 Color.Gels <- params$Color.Gels
 ```
-
-# Define path to Rfunctions
-
-```{r}
-# Define path to R_functions
-path_Data_analysis <- stringr::str_extract(here::here(), ".*Data_analysis")
-path_Rfunctions <- file.path(path_Data_analysis, "R_functions")
-```
-

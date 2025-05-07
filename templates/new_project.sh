@@ -35,6 +35,12 @@ mkdir -p "${projectdir}"/{config,data/{raw,metadata,processed},outputs/{figures_
 echo "Created folder structure in: ${projectdir}"
 
 # === 4. Copy Template Files ===
+renv_template="${userbase}/R_functions/templates/renv_template"
+cp "${renv_template}/renv.lock" "${projectdir}/"
+cp "${renv_template}/.Rprofile" "${projectdir}/"
+mkdir -p "${projectdir}/renv"
+cp "${renv_template}/renv/activate.R" "${projectdir}/renv/"
+cp "${renv_template}/renv/settings.json" "${projectdir}/renv/"
 
 cp "${userbase}/R_functions/templates/quarto_template.qmd" "${projectdir}/reports/" 2>/dev/null
 cp "${userbase}/R_functions/templates/gitignore_template" "${projectdir}/.gitignore" 2>/dev/null
@@ -48,9 +54,13 @@ cd "${projectdir}"
 git init
 echo "Initialized empty Git repository."
 
-# === 6. renv Setup ===
-echo "renv::init()" > "${projectdir}/scripts/init_renv.R"
-echo "Added renv init script."
+# === 6. Add renv auto-restore logic to .Rprofile ===
+echo '' >> "${projectdir}/.Rprofile"
+echo '# Auto-restore renv on project load' >> "${projectdir}/.Rprofile"
+echo 'if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")' >> "${projectdir}/.Rprofile"
+echo 'tryCatch(renv::restore(prompt = FALSE), error = function(e) message("renv restore skipped: ", e$message))' >> "${projectdir}/.Rprofile"
+echo "Auto-restore logic added to .Rprofile."
+
 
 # === 7. Create RStudio Project File ===
 rproj_file="${projectdir}/${projectname}.Rproj"

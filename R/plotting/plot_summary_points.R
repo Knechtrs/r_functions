@@ -66,7 +66,7 @@ plot_summary_points <- function(
       position = dodge
     ) +
     scale_y_continuous(limits = ylimits, expand = expansion(mult = c(0, 0.05))) +
-    theme_Layout +
+    theme_layout +
     theme_fontsize(fontsize) +
     theme(
       legend.position = "none",

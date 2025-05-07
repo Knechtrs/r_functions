@@ -35,12 +35,11 @@ mkdir -p "${projectdir}"/{config,data/{raw,metadata,processed},outputs/{figures_
 echo "Created folder structure in: ${projectdir}"
 
 # === 4. Copy Template Files ===
-renv_template="${userbase}/R_functions/templates/renv_template"
-cp "${renv_template}/renv.lock" "${projectdir}/"
-cp "${renv_template}/.Rprofile" "${projectdir}/"
+cp "${userbase}/R_functions/renv.lock" "${projectdir}/"
+cp "${userbase}/R_functions/.Rprofile" "${projectdir}/"
 mkdir -p "${projectdir}/renv"
-cp "${renv_template}/renv/activate.R" "${projectdir}/renv/"
-cp "${renv_template}/renv/settings.json" "${projectdir}/renv/"
+cp "${userbase}/R_functions/renv/activate.R" "${projectdir}/renv/"
+cp "${userbase}/R_functions/renv/settings.json" "${projectdir}/renv/"
 
 cp "${userbase}/R_functions/templates/quarto_template.qmd" "${projectdir}/reports/" 2>/dev/null
 cp "${userbase}/R_functions/templates/gitignore_template" "${projectdir}/.gitignore" 2>/dev/null

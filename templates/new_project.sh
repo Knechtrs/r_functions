@@ -8,7 +8,7 @@
 
 # === 1. Prompt user for input ===
 
-read -p "Define data analysis subfolder (e.g. fracture, macrophage, etc.): " subfolder
+read -p "Define data analysis subfolder: " subfolder
 subfolder=${subfolder:-"general"}
 
 read -p "Enter new project folder name: " projectname
@@ -51,6 +51,18 @@ echo "Initialized empty Git repository."
 # === 6. renv Setup ===
 echo "renv::init()" > "${projectdir}/scripts/init_renv.R"
 echo "Added renv init script."
+
+# === 7. Create RStudio Project File ===
+rproj_file="${projectdir}/${projectname}.Rproj"
+echo "Version: 1.0" > "$rproj_file"
+echo "RestoreWorkspace: No" >> "$rproj_file"
+echo "SaveWorkspace: No" >> "$rproj_file"
+echo "AlwaysSaveHistory: Default" >> "$rproj_file"
+echo "EnableCodeIndexing: Yes" >> "$rproj_file"
+echo "UseSpacesForTab: Yes" >> "$rproj_file"
+echo "NumSpacesForTab: 2" >> "$rproj_file"
+echo "Encoding: UTF-8" >> "$rproj_file"
+echo "RStudio project file created."
 
 # === Done ===
 echo "Project '${projectname}' is ready at: ${projectdir}"

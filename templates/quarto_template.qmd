@@ -21,6 +21,7 @@ library(rstatix)
 library(yaml)
 library(cowplot)
 library(sessioninfo)
+library(ggforce)
 
 # ---- renv management ----
 # This project already has renv initialized via setup script.

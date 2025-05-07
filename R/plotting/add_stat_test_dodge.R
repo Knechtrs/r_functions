@@ -3,14 +3,15 @@ add_stat_test_dodge <- function(
     yData,
     Group,  # groups to compare for stat test, set to NULL when only dodged!
     Dodge = NULL, # column name of dodge variable
-    dodge_width = NULL, # need to specify dodge_width if using plot_paired_points.v1
-    statGroup_by = NULL, # if dodge and group are the same: need to define group_by variable for stat.test
+    dodge_width = NULL, # need to specify dodge_width
+    stat_group_by = NULL, # if dodge and group are the same: need to define group_by variable for stat.test
     test = "t.test",
     Facet = NULL, # column name for faceting
     paired = FALSE, # paired data? => set to TRUE and need to define paired id => id
     id = NULL, # paired id, indicating which pairs to compare
     FontSize = 12,
-    yPosition = NULL # if you want to set y-position of p-value label manually
+    yPosition = NULL, # if you want to set y-position of p-value label manually
+    expand_y_0 = TRUE
     ) {
 
   # Extract data from ggplot object
@@ -36,7 +37,7 @@ add_stat_test_dodge <- function(
     # Explicit duplication if Group == Dodge
     df <- rename_Col(df, Name = Dodge, NewName = "Dodge_col")
     df <- df %>% dplyr::mutate(Group_col = Dodge_col)
-    df <- rename_Col(df, Name = statGroup_by, NewName ="statGroup_by")
+    df <- rename_Col(df, Name = stat_group_by, NewName ="stat_group_by")
   } else {
   df <- df %>% 
     rename_Col(Name = Dodge, NewName = "Dodge_col") %>%
@@ -71,8 +72,8 @@ add_stat_test_dodge <- function(
   }
   
   # set dodge and group:
-  if (!is.null(statGroup_by)) { # dodge == group
-    group_vars <- c(group_vars, "statGroup_by")
+  if (!is.null(stat_group_by)) { # dodge == group
+    group_vars <- c(group_vars, "stat_group_by")
   } else if (!is.null(Dodge) && Group != Dodge){ # dodge != group
     group_vars <- c(group_vars, "Group_col")
   } else if (!is.null(Dodge) && is.null(Group)){ #only dodge
@@ -91,10 +92,10 @@ add_stat_test_dodge <- function(
   }
  
   #----- Add significance and plot position ----#
-  if(!is.null(statGroup_by)){ # need to calculate x-position differently, when dodge=group
+  if(!is.null(stat_group_by)){ # need to calculate x-position differently, when dodge=group
     stat.test <- stat.test %>%
       rstatix::add_significance() %>%
-      add_xy_position(x = "statGroup_by", fun = "max", dodge = if (!is.null(dodge_width)) dodge_width else plot$layers[[1]]$position$dodge.width) %>%
+      add_xy_position(x = "stat_group_by", fun = "max", dodge = if (!is.null(dodge_width)) dodge_width else plot$layers[[1]]$position$dodge.width) %>%
       dplyr::mutate(
         yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
         p_formatted = format_pvalue(p)
@@ -111,14 +112,14 @@ add_stat_test_dodge <- function(
   
   #---- for facet_wrap: re-calculate y.position ----#
   if(!is.null(Facet)) {
-    if(!is.null(statGroup_by)) { # if dodge = Group: also group by statGroup_by
+    if(!is.null(stat_group_by)) { # if dodge = Group: also group by stat_group_by
       # Step 1: Calculate max y per facet from the original data
       y_max_per_facet <- df %>%
-        dplyr::group_by(Facet_col, statGroup_by) %>%
+        dplyr::group_by(Facet_col, stat_group_by) %>%
         dplyr::summarise(y_max = max(yData_col, na.rm = TRUE), .groups = "drop")
       # Step 2: Join to stat.test
       stat.test <- stat.test %>%
-        dplyr::left_join(y_max_per_facet, by = c("Facet_col", "statGroup_by")) %>% 
+        dplyr::left_join(y_max_per_facet, by = c("Facet_col", "stat_group_by")) %>% 
         mutate(
           yMax = if (!is.null(yPosition)) yPosition else y_max * 1.05 ) %>% # 1.05 adds little space between max value and bracket. 
         select(-y_max)
@@ -144,7 +145,7 @@ add_stat_test_dodge <- function(
   
   #---- for doge: re-calculate x-positions for dodge != group ----#
   if(!is.null(Dodge)) { 
-    if(!is.null(statGroup_by)) {
+    if(!is.null(stat_group_by)) {
       stat.test <- stat.test
     } else {
       stat.test <- stat.test %>%
@@ -157,16 +158,16 @@ add_stat_test_dodge <- function(
     }
   }
   
-  #---- # need to rename statGroup_by, so it is the same as in plot metadata ----#
-  if(!is.null(statGroup_by)) {
+  #---- # need to rename stat_group_by, so it is the same as in plot metadata ----#
+  if(!is.null(stat_group_by)) {
     stat.test <- stat.test %>%
-      dplyr::rename(!!statGroup_by := !!rlang::sym("statGroup_by"))
+      dplyr::rename(!!stat_group_by := !!rlang::sym("stat_group_by"))
   }
   
   #---- add labels to plot ----# 
   
   # Set linetype and tip.length first: add line if comp across group factor and not dodge
-  linetype_val <- if (!is.null(Dodge) && is.null(statGroup_by)) "solid" else "blank"
+  linetype_val <- if (!is.null(Dodge) && is.null(stat_group_by)) "solid" else "blank"
   tip_length_val <- if (linetype_val == "solid") 0.05 else 0
   
   # Base plot with stat_pvalue_manual
@@ -184,14 +185,37 @@ add_stat_test_dodge <- function(
       size = FontSize / 2.835
     )
   
-  # Extend y scale
-  if (!is.null(Dodge)) { # just dodge
-    Plot_out <- Plot_out + 
-      scale_y_continuous(limits = c(0,NA), expand = expansion(mult=c(0,0.4)))
-  } else if (is.null(Dodge) && is.null(Facet)) { # dodge and facet
-    Plot_out <- Plot_out + 
-      scale_y_continuous(limits = c(0,NA), expand = expansion(mult=c(0,0.2)))
+  # Determine y-axis expansion factor based on combination of Dodge and Facet
+  y_expand_mult <- case_when(
+    !is.null(Dodge) && !is.null(Facet) ~ 0.3,  # both dodge and facet
+    !is.null(Dodge) &&  is.null(Facet) ~ 0.4,  # only dodge
+    is.null(Dodge) && !is.null(Facet) ~ 0.25, # only facet
+    is.null(Dodge) &&  is.null(Facet) ~ 0.2   # neither dodge nor facet
+  )
+  
+  # Apply scale_y_continuous with dynamic expansion
+  if (expand_y_0) {
+    Plot_out <- Plot_out +
+      scale_y_continuous(
+        limits = c(0, NA),
+        expand = expansion(mult = c(0.05, y_expand_mult))
+      )
+  } else {
+    Plot_out <- Plot_out +
+      scale_y_continuous(
+        limits = c(0, NA),
+        expand = expansion(mult = c(0, y_expand_mult))
+      )
   }
+
+  # # Extend y scale
+  # if (!is.null(Dodge)) { # just dodge
+  #   Plot_out <- Plot_out + 
+  #     scale_y_continuous(limits = c(0,NA), expand = expansion(mult=c(0,0.4)))
+  # } else if (is.null(Dodge) && is.null(Facet)) { # dodge and facet
+  #   Plot_out <- Plot_out + 
+  #     scale_y_continuous(limits = c(0,NA), expand = expansion(mult=c(0,0.2)))
+  # } 
   
   # Final plot
   Plot_out

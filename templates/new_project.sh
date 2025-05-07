@@ -45,7 +45,7 @@ cp "${renv_template}/renv/settings.json" "${projectdir}/renv/"
 cp "${userbase}/R_functions/templates/quarto_template.qmd" "${projectdir}/reports/" 2>/dev/null
 cp "${userbase}/R_functions/templates/gitignore_template" "${projectdir}/.gitignore" 2>/dev/null
 cp "${userbase}/R_functions/templates/README_template.md" "${projectdir}/README.md" 2>/dev/null
-cp "${rfunctions}/config/"*.yaml "${projectdir}/config/" 2>/dev/null
+cp "${userbase}/R_functions/templates/config/"*.yaml "${projectdir}/config/" 2>/dev/null
 
 echo "Template files copied to project folder."
 

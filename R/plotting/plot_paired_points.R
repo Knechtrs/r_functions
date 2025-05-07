@@ -3,6 +3,7 @@ plot_paired_points <- function(
     xvar = NULL,
     yvar,
     fillvar = NULL, # variable for fill color
+    colorvar = NULL, # varibale for color. Shouldn't be NULL!
     connectVar1, # variable for connecting: within dodge
     connectVar2 = NULL, # variable 2 for connecting: ensures not across group
     use_dodge = FALSE, # set TRUE, if dodging
@@ -27,14 +28,21 @@ plot_paired_points <- function(
     xvar <- "x_dummy"
   }
   
-  # If fillvar or Group are NULL, use constant
+  # If colorvar or Group are NULL, use constant
+  if (is.null(colorvar)) {
+    data <- data %>% mutate(color_dummy = "all")
+    colorvar <- "color_dummy"
+  }
+  if (is.null(Group)) {
+    Group <- colorvar
+  }
+  
+  # If fillvar is NULL, use constant
   if (is.null(fillvar)) {
     data <- data %>% mutate(fill_dummy = "all")
     fillvar <- "fill_dummy"
   }
-  if (is.null(Group)) {
-    Group <- fillvar
-  }
+
   
   library(dplyr)
   library(rlang)
@@ -59,7 +67,7 @@ plot_paired_points <- function(
   }
   
   # Plotting
-  p <- ggplot(data, aes(x = !!sym(x_aes), y = !!sym(yvar), color = !!sym(fillvar), group = !!sym(Group)))
+  p <- ggplot(data, aes(x = !!sym(x_aes), y = !!sym(yvar), color = !!sym(colorvar), fill = !!sym(fillvar), group = !!sym(Group)))
   
   # Conditional line layer
   if (!is.null(connectVar2)) {
@@ -68,12 +76,18 @@ plot_paired_points <- function(
     p <- p + geom_line(aes(group = !!sym(connectVar1)), color = "black")
   }
   
+  # Only apply color scale if colorvar was originally specified
+  if (!is.null(fillvar) && fillvar != "fill_dummy") {
+    p <- p + geom_point(shape = 21, size = PointSize + 1, position= dodge)
+  } else {
+    p <- p + geom_point(shape = 21, size = PointSize + 1, fill = "white", position= dodge)
+  }
+  
   # Remaining plot layers
   p <- p +
-    geom_point(shape = 21, size = PointSize + 1, fill = "white", position= dodge) +
     scale_x_discrete(limits = c(levels(as.factor(pull(data, !!sym(xvar)))))) +
     scale_y_continuous(limits = ylimits, expand = expansion(mult = c(0, 0.05))) +
-    theme_Layout +
+    theme_layout +
     theme_fontsize(fontsize) +
     theme(
       legend.position = "none",
@@ -81,10 +95,14 @@ plot_paired_points <- function(
       plot.title = element_text(hjust = 0.5)
     )
   
-  
-  # Only apply fill scale if fillvar was originally specified
-  if (!is.null(fillvar) && fillvar != "fill_dummy") {
+  # Only apply color scale if colorvar was originally specified
+  if (!is.null(colorvar) && colorvar != "color_dummy") {
     p <- p + scale_color_manual(values = colors)
+  }
+  
+  # Only apply fill scale if colorvar was originally specified
+  if (!is.null(fillvar) && fillvar != "fill_dummy") {
+    p <- p + scale_fill_manual(values = colors)
   }
   
   # facet

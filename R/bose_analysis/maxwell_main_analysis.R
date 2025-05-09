@@ -22,8 +22,8 @@ names(list_df) <- names_list            # assign names
 # Apply fitting to each dataset:  uses custom maxwell_fitting_function
 list_fitted <- lapply(list_df, function(df) {
   maxwell_fitting_function(
-    df %>% drop_units(.),
-    time = "Time",
+    df, #%>% drop_units(.),
+    time = time,
     fit_var = fit_var,
     model_type = model_type
   )

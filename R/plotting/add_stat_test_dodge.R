@@ -5,6 +5,7 @@ add_stat_test_dodge <- function(
     Dodge = NULL, # column name of dodge variable
     dodge_width = NULL, # need to specify dodge_width
     stat_group_by = NULL, # if dodge and group are the same: need to define group_by variable for stat.test
+    test_across_group = FALSE, # set to TRUE if test across group in dodge situation 
     test = "t.test",
     Facet = NULL, # column name for faceting
     paired = FALSE, # paired data? => set to TRUE and need to define paired id => id
@@ -38,6 +39,11 @@ add_stat_test_dodge <- function(
     df <- rename_Col(df, Name = Dodge, NewName = "Dodge_col")
     df <- df %>% dplyr::mutate(Group_col = Dodge_col)
     df <- rename_Col(df, Name = stat_group_by, NewName ="stat_group_by")
+  # } else if(!is.null(Dodge) && Group == Dodge && !is.null(stat_across)) {
+  #   # Explicit duplication if Group == Dodge
+  #   df <- rename_Col(df, Name = Dodge, NewName = "Dodge_col")
+  #   df <- df %>% dplyr::mutate(Group_col = Dodge_col)
+  #   df <- rename_Col(df, Name = "Group_col", NewName ="stat_group_by")
   } else {
   df <- df %>% 
     rename_Col(Name = Dodge, NewName = "Dodge_col") %>%
@@ -75,7 +81,7 @@ add_stat_test_dodge <- function(
   if (!is.null(stat_group_by)) { # dodge == group
     group_vars <- c(group_vars, "stat_group_by")
   } else if (!is.null(Dodge) && Group != Dodge){ # dodge != group
-    group_vars <- c(group_vars, "Group_col")
+    group_vars <- c(group_vars, "Dodge_col")
   } else if (!is.null(Dodge) && is.null(Group)){ #only dodge
     group_vars <- c(group_vars, "Dodge_col")
   } else if (!is.null(Group) && is.null(Dodge)) {# only group

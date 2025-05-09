@@ -6,8 +6,8 @@ maxwell_plotting_stresscurves <- function(
     time = "Time", # column of time data
     fit_var = "Load_norm", # column name of fit data
     color_var = NULL, # column name for color variable. if NULL set label color_label!
-    color_label = "Hematoma", # legend label color 
-    color_vec =   colors_fit, 
+    # color_label = "Hematoma", # legend label color 
+    color_vec = colors_fit,
     # fit_label1 = "one element", # legend label
     # fit_label2 = "two element", # legend label
     t_max = 3000,
@@ -15,9 +15,8 @@ maxwell_plotting_stresscurves <- function(
     show_labels = TRUE
 ) {
   
-  fitted_data_all <- list()
+  fitted_data_all <- list() 
   param_labels_all <- list()
-  
   
   if (which_models %in% c("one", "both") && !is.null(result1)) {
     data1 <- result1$fitted_data %>%
@@ -67,41 +66,41 @@ maxwell_plotting_stresscurves <- function(
     }
   }
   
+  # combine dataframes (multiple donors)
   data_fitted_combined <- bind_rows(fitted_data_all)
+  
   label_positions <- if (show_labels) bind_rows(param_labels_all) else NULL
   
-  # Determine color aesthetic mapping: option to define just label or column in df
-  if (!is.null(color_var)) {
-    aes_color <- !!sym(color_var)  # Use dynamic column for coloring
-  } else {
-    aes_color <- color_label  # Fixed label for legend
-    df[[color_label]] <- color_label       # Add dummy column for consistent behavior
-  }
+ # # Determine color aesthetic mapping: option to define just label or column in df
+ #  if (!is.null(color_var)) {
+ #    aes_color <- color_var  # Use dynamic column for coloring
+ #  } else {
+ #    aes_color <- color_label  # Fixed label for legend
+ #    df[[color_label]] <- color_label       # Add dummy column for consistent behavior
+ #  }
   
+  # check if color_var exists in df. If not, add as column:
+  if (!(color_var %in% names(df))) {
+    df <- df %>%
+      mutate(!!sym(color_var) := color_var)
+  }
+
   # create plot
   plot_fitted <- ggplot() +
     geom_path(data = df,
-              aes(x = !!sym(time), y = !!sym(fit_var), color = aes_color),
+              aes(x = !!sym(time), y = !!sym(fit_var), color = !!sym(color_var)),
               linewidth = 1.5) +
-    geom_path(data = data_fitted_combined,
+    geom_path(data = data_fitted_combined %>% arrange(!!sym(time)), # order of time data is important for geom_path!
               aes(x = !!sym(time), y = !!sym(fit_var), color = Model),
               alpha = 1,
               linewidth = 1,
               linetype = "11") +
     facet_wrap(reformulate(id), nrow = 2) +
     scale_color_manual(
-      name = "",  # optional legend title
-      values = colors_fit
+      name = "",
+      values = unlist(color_vec)
     ) +
-    # scale_color_manual(
-    #   name = "",
-    #   values = c(
-    #     setNames(data_color, color_label),
-    #     setNames(fit_color1, fit_label1),
-    #     setNames(fit_color2, fit_label2)
-    #   )
-    # ) +
-    scale_x_continuous(limits = c(0, t_max), expand = expansion(mult = c(0.05, 0))) +
+  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0.05, 0))) +
     labs(x = "Time (s)", y = "Normalized stress") +
     theme_layout +
     theme_fontsize(FontSize)

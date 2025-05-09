@@ -1,13 +1,13 @@
 plot_summary_points <- function(
-    data,
-    xvar = NULL,
+    data, # data
+    xvar = NULL, 
     yvar,
-    fillvar = NULL,
-    Group = NULL,
+    fillvar = NULL, # fill variable for color
+    Group = NULL, # group for doging
     use_dodge = FALSE,
     dodge_width = 0.5,
     jitter_width = 0.1,
-    colors = "grey",
+    colors = "grey", # color vector for groups
     ylimits = c(0, NA),
     fontsize =FontSize,
     pointsize = PointSize,

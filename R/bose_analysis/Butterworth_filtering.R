@@ -1,19 +1,29 @@
 #---- apply butterworth filter ----#
 
-# Define the Butterworth filter parameters
-order <- params$FilterParams$order  # Filter order
-cutoff_freq <- params$FilterParams$cutoff  # Cutoff frequency (Hz)
+butterworth_filtering <- function(
+    df_data,
+    load = "Load",    # name of column with load data (string)
+    time = "Time",    # name of column with time data (string)
+    id = "exp" # sample identifier
+) {
+  # Define Butterworth filter parameters
+  order <- params$FilterParams$order     # e.g., 4
+  cutoff_freq <- params$FilterParams$cutoff  # e.g., 10 Hz
+  
+  # Get only stress-relaxation portion of the data
+  df_data <- df_data %>%
+    group_by(exp) %>%
+    mutate(
+      max_time = .data[[time]][which.max(.data[[load]])]
+    ) %>%
+    filter(.data[[time]] > max_time) %>%
+    mutate(
+      !!time := .data[[time]] - max_time  # reset time to zero at max load
+    ) %>%
+    ungroup()
 
-# get only stress relax data
-data_StressRelax <- df_data %>%
-  group_by(exp) %>%
-  mutate(max_time = Time[which.max(Load)]) %>%  # Get the time at max(load_BF)
-  filter(Time > max_time) %>%  # Filter for time after max(load_BF) timepoint
-  mutate(Time = Time - max_time) %>%  # Adjust time relative to max(load_BF)
-  ungroup()
-
-# quickly check data
-print(Plotting_LoadTime(data_StressRelax, y2=NULL))
+# # quickly check data
+# print(plot_load_time(data_StressRelax))
 
 library(signal)
 
@@ -34,30 +44,22 @@ apply_butterworth <- function(signal, order, cutoff_freq, fs, pad_len = 100) {
 }
 
 # Apply to data
-data_StressRelax <- data_StressRelax %>%
-  mutate(Load = as.double(Load)) %>%
-  group_by(exp) %>%
+df_data <- df_data %>%
+  mutate(!!sym(load) := as.double(.data[[load]])) %>%
+  group_by(!!sym(id)) %>%
   mutate(
-    Load_BF = apply_butterworth(Load, order, cutoff_freq, sampling_rate)
+    load_BF = apply_butterworth(.data[[load]], order, cutoff_freq, sampling_rate)
   ) %>%
   ungroup()
 
 detach("package:signal", unload = TRUE)
 
-# library(signal)
-# 
-# df_data <- df_data %>%
-#   mutate(Load_BF = filtfilt(butter(order, cutoff_freq, type = "low", fs = sampling_rate), Load)) # smooth data with butterworth filter
-# 
-# detach("package:signal", unload = TRUE)
-
 #---- normalize to load ----#
-data_StressRelax <- data_StressRelax %>%
-  group_by(exp) %>%
-  mutate(Load_norm = Load_BF / max(Load_BF, na.rm = TRUE)) %>%  # Normalize to load_BF
+df_data <- df_data %>%
+  group_by(!!sym(id)) %>%
+  mutate(load_norm = load_BF / max(load_BF, na.rm = TRUE)) %>%  # Normalize to load_BF
   ungroup()
 
-#---- check data ----#
+return(df_data)
 
-# quickly check data: if butterworth filter worked well
-print(Plotting_LoadTime(data_StressRelax))
+}

@@ -1,6 +1,6 @@
 ---
 title: "Analysis Template"
-author: "Your Name"
+author: "Raphael S. Knecht"
 date: today
 format: html
 editor: visual

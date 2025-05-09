@@ -1,11 +1,3 @@
-##########################################################################################################
-#### 4. E-modulus analysis
-##########################################################################################################
-#---- define parameters ----#
-GelHeight <- params$GelProperties$Height
-Gel_r <- params$GelProperties$Radius
-Emod_low <- params$Emod_low # lower end of E-Mod fit
-Emod_high <- params$Emod_high # upper end of E-Mod fit
 
 #---- calculate stress and Strain ----#
 data_Emod <- df_data %>%
@@ -19,8 +11,8 @@ data_Emod <- df_data %>%
 
 #---- check how good linear fit and strain range fits ----#
 # subset data for Strain range
-data_fitRange <- data_Emod %>% 
-  filter(Strain >= Emod_low & Strain <= Emod_high) 
+data_fitRange <- data_Emod %>%
+  filter(Strain >= Emod_low & Strain <= Emod_high)
 
 # check if fit is in a linear region
 plot_EmodFit <- ggplot() +
@@ -53,4 +45,4 @@ Plot_Emod <- plot_summary_points(
   colors = Color.Gels,
   fontsize = FontSize
 ) +
-  labs(y="Elastic modulus (kPa)") 
+  labs(y="Elastic modulus (kPa)")

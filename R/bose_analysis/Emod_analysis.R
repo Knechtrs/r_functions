@@ -1,48 +1,62 @@
+emod_analysis <- function(
+    df_data = df_data,
+    id = "exp",
+    load = "load",
+    time = "time",
+    disp = "disp",
+    groupvar = "Alginate",
+    gel_height = params$GelProperties$Height,
+    gel_r = params$GelProperties$Radius,
+    emod_low = params$Emod_low,
+    emod_high = params$Emod_high,
+    FontSize = params$theme$FontSize
+) {
 
-#---- calculate stress and Strain ----#
-data_Emod <- df_data %>%
-  group_by(exp) %>%
-  mutate(max_time = Time[which.max(Load)]) %>%  # Get the time at max(load_BF)
-  filter(Time < max_time) %>%  # Filter for time after max(load_BF) timepoint
-  mutate(Disp= max(Disp) - Disp, # normalize Disp
-         Strain=Disp/GelHeight) %>% # calculate Strain
-  mutate(Stress=Load*9.81/((pi*Gel_r^2))) %>%
-  ungroup()
-
-#---- check how good linear fit and strain range fits ----#
-# subset data for Strain range
-data_fitRange <- data_Emod %>%
-  filter(Strain >= Emod_low & Strain <= Emod_high)
-
-# check if fit is in a linear region
-plot_EmodFit <- ggplot() +
-  geom_line(data = data_Emod , aes(x = Disp, y = Load)) +
-  geom_smooth(data = data_fitRange, aes(x = Disp, y = Load), color="red", linewidth=1.2, method = "lm", se = FALSE) +
-  facet_wrap(~ exp, scale="free_y") +
-  theme_bw() +
-  theme(strip.background = element_blank()) +
-  labs(x="displacement (mm)", y= "load (g)") +
-  ggtitle(paste0("E-modulus fit between ", Emod_low*100, "% -", Emod_high*100, "% strain")) +
-  theme_fontsize(FontSize)
-
-#---- Calculating E modulus -----#
-
-# Perform modulus fit using nest() + map()
-df_modulus <- data_fitRange %>%
-  group_by(exp, Alginate) %>%
-  nest() %>% #nest() allows storing models in a list-column while keeping other data columns
-  mutate(model = map(data, ~ lm(Stress ~ Strain, data = .x))) %>%
-  select(-data) %>%  # Remove raw data column to keep it clean
-  mutate(Emod = map_dbl(model, ~ coef(summary(.x))[2, 1])) %>%  # use map_dbl to return numeric value
-  ungroup()
-
-# create plot with E-Modulus
-Plot_Emod <- plot_summary_points(
-  data = df_modulus,
-  xvar = "Alginate",
-  yvar= "Emod",
-  fillvar= "Alginate",
-  colors = Color.Gels,
-  fontsize = FontSize
-) +
-  labs(y="Elastic modulus (kPa)")
+  #---- calculate stress and strain ----#
+  data_emod <- df_data %>%
+    group_by(!!sym(id)) %>%
+    mutate(max_time = .data[[time]][which.max(.data[[load]])]) %>%
+    filter(!!sym(time) < max_time) %>%
+    mutate(
+      !!sym(disp) := max(!!sym(disp)) - !!sym(disp),
+      strain = !!sym(disp) / gel_height,
+      stress = !!sym(load) * 9.81 / (pi * gel_r^2)
+    ) %>%
+    ungroup()
+  
+  #---- subset data for strain range ----#
+  data_fit_range <- data_emod %>%
+    filter(strain >= emod_low & strain <= emod_high)
+  
+  #---- plot E-modulus range ----#
+  plot_EmodFit <- ggplot() +
+    geom_line(data = data_emod , aes(x = !!sym(disp), y = !!sym(load))) +
+    geom_smooth(data = data_fit_range, aes(x = !!sym(disp), y = !!sym(load)),
+                color = "red", linewidth = 1.2, method = "lm", se = FALSE) +
+    facet_wrap(reformulate(id), scales = "free_y") +
+    theme_layout +
+    theme_fontsize(FontSize) +
+    labs(
+      x = "Displacement (mm)",
+      y = "Load (g)"
+    ) +
+    ggtitle(
+      paste0("E-modulus fit between ", emod_low * 100, "% - ", emod_high * 100, "% strain")
+    )
+  
+  #---- calculate modulus ----#
+  df_modulus <- data_fit_range %>%
+    group_by(!!sym(id), !!sym(groupvar)) %>%
+    nest() %>%
+    mutate(
+      model = map(data, ~ lm(stress ~ strain, data = .x)),
+      Emod = map_dbl(model, ~ coef(.x)[["strain"]])
+    ) %>%
+    select(-data, -model) %>%
+    ungroup()
+  
+  return(list(
+    data = df_modulus,
+    plot = plot_EmodFit
+    ))
+}

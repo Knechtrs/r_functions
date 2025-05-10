@@ -1,5 +1,5 @@
 maxwell_main_analysis <- function(
-    df = data_StressRelax,
+    df = data_stressrelax,
     t_max = params$tMax,
     model_type = "two",
     id = id, # sample identifier. Analysis is performed per sample 
@@ -8,15 +8,16 @@ maxwell_main_analysis <- function(
   ){
 
 # Clean and split data by experimental groups and name list items
-list_df <- df %>%
-  na.omit() %>%
-  droplevels() %>%
-  group_by(across(all_of(id)))
+  list_df <- df %>%
+    na.omit() %>%
+    droplevels() %>%
+    group_by(across(all_of(id))) %>%
+    filter(!!sym(time) <= .env$t_max) # ensure fit is only until t_max
 
-names_list <- group_keys(list_df)[[1]]  # assumes `id` is a single column
+  names_list <- group_keys(list_df)[[1]]  # assumes `id` is a single column
 
-list_df <- group_split(list_df)         # now split
-names(list_df) <- names_list            # assign names
+  list_df <- group_split(list_df)         # now split
+  names(list_df) <- names_list            # assign names
 
 
 # Apply fitting to each dataset:  uses custom maxwell_fitting_function

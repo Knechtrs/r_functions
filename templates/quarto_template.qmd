@@ -79,11 +79,11 @@ params <- load_yaml(default_file = here("config", "params.yaml"))
 
 # # Optionally override theme settings
 # # PowerPoint
-# params <- load_param(override_file = here("config", "theme_settings_ppt.yaml"))
+# params <- load_yaml(override_file = here("config", "theme_settings_ppt.yaml"))
 # # Poster
-# params <- load_param(override_file = here("config", "theme_settings_poster.yaml"))
+# params <- load_yaml(override_file = here("config", "theme_settings_poster.yaml"))
 # # Publication
-# params <- load_param(override_file = here("config", "theme_settings_publication.yaml"))
+# params <- load_yaml(override_file = here("config", "theme_settings_publication.yaml"))
 
 # Set theme parameters
 FontSize <- params$theme$FontSize

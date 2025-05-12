@@ -34,7 +34,8 @@ maxwell_plotting_stresscurves <- function(
     data1 <- result1$fitted_data %>%
       group_by(!!sym(id)) %>%
       ungroup() %>%
-      mutate(Model = list_maxwell_results_one$model_type)
+      mutate(Model = recode(list_maxwell_results_one$model_type,
+                            "one" = "1-element", "two" = "2-element"))
     fitted_data_all <- append(fitted_data_all, list(data1))
   }
   
@@ -42,7 +43,8 @@ maxwell_plotting_stresscurves <- function(
     data2 <- result2$fitted_data %>%
       group_by(!!sym(id)) %>%
       ungroup() %>%
-      mutate(Model = list_maxwell_results_two$model_type)
+      mutate(Model = recode(list_maxwell_results_two$model_type,
+                            "one" = "1-element", "two" = "2-element"))
     fitted_data_all <- append(fitted_data_all, list(data2))
   }
   

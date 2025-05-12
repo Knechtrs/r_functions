@@ -7,6 +7,7 @@ theme_layout <- theme(
     panel.grid.minor = element_blank(),
     axis.line.x = element_line(linewidth = 0.5, color="black"),
     axis.line.y = element_line(linewidth = 0.5, color="black"),
+    axis.ticks = element_line(color = "black"),
     text = element_text(color = "black"),
     axis.title = element_text(color = "black"),
     axis.text = element_text(color = "black"),

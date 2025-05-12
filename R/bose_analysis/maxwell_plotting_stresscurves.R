@@ -10,7 +10,9 @@ maxwell_plotting_stresscurves <- function(
     t_max = NULL, # max time value that get's plotted
     slice_it = FALSE, # should dataframe be log sliced? reduces file size of ggplot
     slice_points = 100, # number of points per sample
-    id = "alg_batch"
+    id = "alg_batch",
+    linewidth = 1, # line width of fitted data
+    linetype = 11 # one on one off
     # show_labels = TRUE
 ) {
   
@@ -61,12 +63,12 @@ maxwell_plotting_stresscurves <- function(
   plot_fitted <- ggplot() +
     geom_path(data = df,
               aes(x = !!sym(time), y = !!sym(fit_var), color = !!sym(color_var)),
-              linewidth = 1.5) +
+              linewidth = linewidth*2) +
     geom_path(data = data_fitted_combined %>% arrange(!!sym(time)), # order of time data is important for geom_path!
               aes(x = !!sym(time), y = !!sym(fit_var), color = Model),
               alpha = 1,
-              linewidth = 1,
-              linetype = "11") +
+              linewidth = linewidth,
+              linetype =  I(linetype)) + 
     facet_wrap(reformulate(id), nrow = 2) +
     scale_color_manual(
       name = "",

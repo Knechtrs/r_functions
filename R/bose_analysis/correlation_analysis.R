@@ -3,7 +3,9 @@ correlation_analysis <- function(
     df_meta = df_meta, # df with meta data from hematoma
     df_Emod  = df_modulus, # df from E-modulus analysis
     df_fit = list_maxwell_results_two$parameters, # df from maxwell fit analysis
-    df_tHalf = df_tHalf # df from tHalf analysis
+    df_tHalf = df_tHalf, # df from tHalf analysis
+    FontSize = FontSize,
+    LineWidth = LineWidth
 ){
   
 

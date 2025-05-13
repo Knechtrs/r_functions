@@ -12,7 +12,8 @@ add_stat_test_dodge <- function(
     id = NULL, # paired id, indicating which pairs to compare
     FontSize = 12,
     yPosition = NULL, # if you want to set y-position of p-value label manually
-    expand_y_0 = TRUE
+    expand_y_0 = TRUE,
+    format_pvalue = format_pvalue
     ) {
 
   # Extract data from ggplot object

@@ -13,7 +13,8 @@ add_stat_test_dodge <- function(
     FontSize = 12,
     yPosition = NULL, # if you want to set y-position of p-value label manually
     expand_y_0 = TRUE,
-    format_pvalue = format_pvalue
+    format_pvalue_dif = NULL # optinal function to format p-values differently
+    
     ) {
 
   # Extract data from ggplot object
@@ -105,7 +106,7 @@ add_stat_test_dodge <- function(
       add_xy_position(x = "stat_group_by", fun = "max", dodge = if (!is.null(dodge_width)) dodge_width else plot$layers[[1]]$position$dodge.width) %>%
       dplyr::mutate(
         yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
-        p_formatted = format_pvalue(p)
+        p_formatted = if (!is.null(format_pvalue)) format_pvalue(p) else format_pvalue_dif(p)
       )
   } else { # if dodge != group
     stat.test <- stat.test %>%
@@ -113,7 +114,7 @@ add_stat_test_dodge <- function(
       add_xy_position(x = "Group_col", fun = "max") %>%
       dplyr::mutate(
         yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
-        p_formatted = format_pvalue(p)
+        p_formatted = if (!is.null(format_pvalue)) format_pvalue(p) else format_pvalue_dif(p)
       )
   }
   

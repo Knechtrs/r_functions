@@ -10,6 +10,7 @@ plot_paired_points <- function(
     Group = NULL, # variable for dodge
     dodge_width = 0.5,
     colors = "grey",
+    fill_colors = colors,
     ylimits = c(0, NA),
     fontsize =FontSize,
     pointsize = PointSize,
@@ -78,9 +79,9 @@ plot_paired_points <- function(
   
   # Only apply color scale if colorvar was originally specified
   if (!is.null(fillvar) && fillvar != "fill_dummy") {
-    p <- p + geom_point(shape = 21, size = PointSize + 1, position= dodge)
+    p <- p + geom_point(shape = 21, size = PointSize, position= dodge)
   } else {
-    p <- p + geom_point(shape = 21, size = PointSize + 1, fill = "white", position= dodge)
+    p <- p + geom_point(shape = 21, size = PointSize, fill = "white", position= dodge)
   }
   
   # Remaining plot layers
@@ -102,7 +103,7 @@ plot_paired_points <- function(
   
   # Only apply fill scale if colorvar was originally specified
   if (!is.null(fillvar) && fillvar != "fill_dummy") {
-    p <- p + scale_fill_manual(values = colors)
+    p <- p + scale_fill_manual(values = fill_colors)
   }
   
   # facet

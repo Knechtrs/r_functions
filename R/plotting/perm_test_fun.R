@@ -1,12 +1,35 @@
-perm_test_fun <- function(
-    data,
-    formula,
-    paired = TRUE,
-    detailed = TRUE,
-    n_perm = 10000, ...
-    ) {
+perm_test_fun <- function(data, formula, paired = TRUE, n_perm = 10000, ...) {
+  # This is a special version of the function that needs to handle grouped data from dplyr
+  # Check if data is grouped
+  is_grouped <- dplyr::is_grouped_df(data)
   
- 
+  # If data is grouped, we need to handle the groups properly
+  if (is_grouped) {
+    # Get the grouping variables
+    group_vars <- dplyr::group_vars(data)
+    
+    # Split data by groups and run test for each group
+    nested_data <- data %>%
+      dplyr::group_by(!!!rlang::syms(group_vars)) %>%
+      tidyr::nest()
+    
+    # Apply the test to each group and unnest results
+    results <- nested_data %>%
+      dplyr::mutate(
+        test_result = purrr::map(data, ~run_single_test(.x, formula, paired, n_perm))
+      ) %>%
+      tidyr::unnest(test_result) %>%
+      dplyr::ungroup()
+    
+    return(results)
+  } else {
+    # If not grouped, just run the test on the whole dataset
+    return(run_single_test(data, formula, paired, n_perm))
+  }
+}
+
+# Helper function to run test on a single dataset (grouped or not)
+run_single_test <- function(data, formula, paired = TRUE, n_perm = n_perm) {
   # Check required packages
   required_packages <- c("dplyr", "tidyr", "coin", "rlang")
   for (pkg in required_packages) {
@@ -30,7 +53,8 @@ perm_test_fun <- function(
   # Get group levels
   group_levels <- unique(data[[group_var]])
   if (length(group_levels) != 2) {
-    stop("Permutation test requires exactly two groups to compare")
+    warning("Permutation test requires exactly two groups to compare. Skipping this group.")
+    return(NULL)
   }
   
   # Prepare output in the format expected by add_stat_test_dodge
@@ -56,13 +80,6 @@ perm_test_fun <- function(
       stringsAsFactors = FALSE
     )
   }
-  
-  # trouble shooting
-  data <- df %>% 
-    filter(
-      Facet_col == "TNF-α",
-      Stimulus == "GMCSF",
-    )
   
   # For paired test - used when paired = TRUE
   run_paired_test <- function() {
@@ -127,8 +144,51 @@ perm_test_fun <- function(
     return(test_result)
   }
   
+  # # For unpaired test - used when paired = FALSE
+  # run_unpaired_test <- function() {
+  #   # Create formula for coin test
+  #   f <- as.formula(paste(response_var, "~", group_var))
+  #   
+  #   # Calculate observed mean difference as test statistic
+  #   obs_stat <- mean(data[data[[group_var]] == group_levels[1], response_var], na.rm = TRUE) - 
+  #     mean(data[data[[group_var]] == group_levels[2], response_var], na.rm = TRUE)
+  #   
+  #   # Run permutation test using coin
+  #   test_result <- tryCatch({
+  #     # Use oneway_test from coin for independent samples
+  #     test <- coin::oneway_test(
+  #       formula = f,
+  #       data = data,
+  #       distribution = coin::approximate(nresample = n_perm),
+  #       alternative = "two.sided"
+  #     )
+  #     
+  #     # Extract p-value as numeric value
+  #     p_val <- as.numeric(coin::pvalue(test))
+  #     
+  #     if (is.na(p_val)) {
+  #       warning("Failed to compute p-value in permutation test.")
+  #       return(create_output(NA, NA, "Independent permutation test (failed)"))
+  #     }
+  #     
+  #     return(create_output(p_val, obs_stat, "Independent permutation test"))
+  #   }, 
+  #   error = function(e) {
+  #     warning("Error in independent permutation test: ", e$message)
+  #     return(create_output(NA, NA, "Independent permutation test (error)"))
+  #   })
+  #   
+  #   return(test_result)
+  # }
+  
   # Run appropriate test based on paired parameter
+  if (paired) {
     result <- run_paired_test()
+  } else {
+    # Currently the function is designed primarily for paired tests
+    warning("Independent samples permutation test may not be fully integrated with add_stat_test_dodge.")
+    result <- run_unpaired_test()
+  }
   
   return(result)
 }

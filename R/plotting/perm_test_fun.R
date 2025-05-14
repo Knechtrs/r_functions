@@ -1,4 +1,12 @@
-perm_test_fun <- function(data, formula, paired = TRUE, detailed = TRUE, n_perm = 10000, ...) {
+perm_test_fun <- function(
+    data,
+    formula,
+    paired = TRUE,
+    detailed = TRUE,
+    n_perm = 10000, ...
+    ) {
+  
+ 
   # Check required packages
   required_packages <- c("dplyr", "tidyr", "coin", "rlang")
   for (pkg in required_packages) {
@@ -48,6 +56,13 @@ perm_test_fun <- function(data, formula, paired = TRUE, detailed = TRUE, n_perm 
       stringsAsFactors = FALSE
     )
   }
+  
+  # trouble shooting
+  data <- df %>% 
+    filter(
+      Facet_col == "TNF-α",
+      Stimulus == "GMCSF",
+    )
   
   # For paired test - used when paired = TRUE
   run_paired_test <- function() {
@@ -112,51 +127,8 @@ perm_test_fun <- function(data, formula, paired = TRUE, detailed = TRUE, n_perm 
     return(test_result)
   }
   
-  # For unpaired test - used when paired = FALSE
-  run_unpaired_test <- function() {
-    # Create formula for coin test
-    f <- as.formula(paste(response_var, "~", group_var))
-    
-    # Calculate observed mean difference as test statistic
-    obs_stat <- mean(data[data[[group_var]] == group_levels[1], response_var], na.rm = TRUE) - 
-      mean(data[data[[group_var]] == group_levels[2], response_var], na.rm = TRUE)
-    
-    # Run permutation test using coin
-    test_result <- tryCatch({
-      # Use oneway_test from coin for independent samples
-      test <- coin::oneway_test(
-        formula = f,
-        data = data,
-        distribution = coin::approximate(nresample = n_perm),
-        alternative = "two.sided"
-      )
-      
-      # Extract p-value as numeric value
-      p_val <- as.numeric(coin::pvalue(test))
-      
-      if (is.na(p_val)) {
-        warning("Failed to compute p-value in permutation test.")
-        return(create_output(NA, NA, "Independent permutation test (failed)"))
-      }
-      
-      return(create_output(p_val, obs_stat, "Independent permutation test"))
-    }, 
-    error = function(e) {
-      warning("Error in independent permutation test: ", e$message)
-      return(create_output(NA, NA, "Independent permutation test (error)"))
-    })
-    
-    return(test_result)
-  }
-  
   # Run appropriate test based on paired parameter
-  if (paired) {
     result <- run_paired_test()
-  } else {
-    # Currently the function is designed primarily for paired tests
-    warning("Independent samples permutation test may not be fully integrated with add_stat_test_dodge.")
-    result <- run_unpaired_test()
-  }
   
   return(result)
 }

@@ -16,6 +16,24 @@ add_stat_test_dodge <- function(
     format_pvalue_dif = NULL # optinal function to format p-values differently
     
     ) {
+  
+  
+  plot = Plot_cytokine_overview
+  yData = "meanConc"
+  Group = "Alginate"
+  Dodge = NULL # column name of dodge variable
+  dodge_width = NULL # need to specify dodge_width
+  stat_group_by = NULL # if dodge and group are the same: need to define group_by variable for stat.test
+  test_across_group = FALSE # set to TRUE if test across group in dodge situation 
+  Facet = "Cytokines"
+  test = "permutation"
+  # test = "t.test"
+  paired = TRUE
+  id = "Donor"
+  FontSize = FontSize
+  expand_y_0 = TRUE
+  yPosition = NULL
+  stat_group_by = NULL
 
   # Extract data from ggplot object
   df <- plot$data
@@ -41,11 +59,6 @@ add_stat_test_dodge <- function(
     df <- rename_Col(df, Name = Dodge, NewName = "Dodge_col")
     df <- df %>% dplyr::mutate(Group_col = Dodge_col)
     df <- rename_Col(df, Name = stat_group_by, NewName ="stat_group_by")
-  # } else if(!is.null(Dodge) && Group == Dodge && !is.null(stat_across)) {
-  #   # Explicit duplication if Group == Dodge
-  #   df <- rename_Col(df, Name = Dodge, NewName = "Dodge_col")
-  #   df <- df %>% dplyr::mutate(Group_col = Dodge_col)
-  #   df <- rename_Col(df, Name = "Group_col", NewName ="stat_group_by")
   } else {
   df <- df %>% 
     rename_Col(Name = Dodge, NewName = "Dodge_col") %>%
@@ -60,20 +73,8 @@ add_stat_test_dodge <- function(
   #---- stat test ----#
   formula <- stats::as.formula("yData_col ~ Group_col")
   
-  # Choose the test function based on input
-  test_fun <- switch(test,
-                     "t.test" = rstatix::t_test,
-                     "wilcox.test" = rstatix::wilcox_test,
-                     stop("Invalid test specified. Use 't.test' or 'wilcox.test'.")
-  )
-  
   ## Determine base grouping structure ##
   group_vars <- c()
-  
-  # # set for paired:
-  # if (paired && !is.null(id)) {
-  #   group_vars <- c(group_vars, "ID_Col")  # always include ID, when paired
-  # }
   
   if (!is.null(Facet)) {
     group_vars <- c(group_vars, "Facet_col")  # always include Facet_col, when faceted
@@ -106,7 +107,7 @@ add_stat_test_dodge <- function(
       add_xy_position(x = "stat_group_by", fun = "max", dodge = if (!is.null(dodge_width)) dodge_width else plot$layers[[1]]$position$dodge.width) %>%
       dplyr::mutate(
         yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
-        p_formatted = if (!is.null(format_pvalue)) format_pvalue(p) else format_pvalue_dif(p)
+        p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
       )
   } else { # if dodge != group
     stat.test <- stat.test %>%
@@ -114,7 +115,7 @@ add_stat_test_dodge <- function(
       add_xy_position(x = "Group_col", fun = "max") %>%
       dplyr::mutate(
         yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
-        p_formatted = if (!is.null(format_pvalue)) format_pvalue(p) else format_pvalue_dif(p)
+        p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
       )
   }
   
@@ -215,15 +216,6 @@ add_stat_test_dodge <- function(
         expand = expansion(mult = c(0, y_expand_mult))
       )
   }
-
-  # # Extend y scale
-  # if (!is.null(Dodge)) { # just dodge
-  #   Plot_out <- Plot_out + 
-  #     scale_y_continuous(limits = c(0,NA), expand = expansion(mult=c(0,0.4)))
-  # } else if (is.null(Dodge) && is.null(Facet)) { # dodge and facet
-  #   Plot_out <- Plot_out + 
-  #     scale_y_continuous(limits = c(0,NA), expand = expansion(mult=c(0,0.2)))
-  # } 
   
   # Final plot
   Plot_out

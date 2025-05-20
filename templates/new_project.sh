@@ -8,8 +8,11 @@
 
 # === 1. Prompt user for input ===
 
-read -p "Define data analysis subfolder: " subfolder
-subfolder=${subfolder:-"general"}
+read -p "Define base folder under OneDrive (default: Data_analysis): " basefolder
+basefolder=${basefolder:-"Data_analysis"}
+
+read -p "Define subfolder (optional): " subfolder
+subfolder=${subfolder:-""}
 
 read -p "Enter new project folder name: " projectname
 if [ -z "$projectname" ]; then
@@ -20,10 +23,10 @@ fi
 # === 2. Define Paths (Windows-safe) ===
 
 real_home="$(cd "$USERPROFILE" && pwd)"
-userbase="${real_home}/OneDrive - Charité - Universitätsmedizin Berlin/Data_analysis"
+userbase="${real_home}/OneDrive - Charité - Universitätsmedizin Berlin/${basefolder}"
 basedir="${userbase}/${subfolder}"
 projectdir="${basedir}/${projectname}"
-rfunctions="${userbase}/R_functions/R"
+rfunctions="${real_home}/OneDrive - Charité - Universitätsmedizin Berlin/Data_analysis/R_functions/R"
 
 echo "Detected real home: $real_home"
 echo "Using userbase: $userbase"

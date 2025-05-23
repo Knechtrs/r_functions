@@ -2,8 +2,10 @@ dimplot_umap <- function(
     df,
     colorvar = "gel",
     colors = Color.Gels,
+    continuous_colors = FALSE,
     pointsize = 0.1,
-    fontsize = 8
+    fontsize = 8,
+    base_family = "Arial"
     ){
     
     # randomize points
@@ -12,8 +14,7 @@ dimplot_umap <- function(
     # create plot
     p <- ggplot(df, aes(x = umap_1, y = umap_2, color = !!sym(colorvar))) +
         geom_point(size = pointsize, shape = 16) +
-        scale_color_manual(values = colors) +
-        theme_fontsize(fontsize) +
+        theme_fontsize(fontsize, base_family) +
         theme_layout +
         theme_UMAP +
         guides(color = guide_legend(override.aes = list(size = 4))) +
@@ -25,5 +26,14 @@ dimplot_umap <- function(
             legend.justification = "center",
             legend.box.spacing = unit(10, "pt")
         )
+
+    if (continuous_colors) {
+        p <- p +  scale_color_gradientn(colours = colors) +
+        guides(color = guide_colorbar()
+      )
+    } else {
+       p <- p +  scale_color_manual(values = colors)
+    }
+    
     return(p)
 }

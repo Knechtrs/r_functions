@@ -11,8 +11,8 @@ maxwell_plotting_stresscurves <- function(
     slice_it = FALSE, # should dataframe be log sliced? reduces file size of ggplot
     slice_points = 100, # number of points per sample
     id = "alg_batch",
-    linewidth = 1, # line width of fitted data
-    linetype = 11 # one on one off
+    linewidth = 1 # line width of fitted data
+    # linetype = 11 # one on one off
     # show_labels = TRUE
 ) {
   
@@ -65,19 +65,21 @@ maxwell_plotting_stresscurves <- function(
               aes(x = !!sym(time), y = !!sym(fit_var), color = !!sym(color_var)),
               linewidth = linewidth*2) +
     geom_path(data = data_fitted_combined %>% arrange(!!sym(time)), # order of time data is important for geom_path!
-              aes(x = !!sym(time), y = !!sym(fit_var), color = Model),
-              alpha = 1,
-              linewidth = linewidth,
-              linetype =  I(linetype)) + 
+              aes(x = !!sym(time), y = !!sym(fit_var), linetype = Model),
+              color = "black",
+              alpha = 0.7,
+              linewidth = linewidth) +
+              # linetype =  linetype) + 
     facet_wrap(reformulate(id), nrow = 2) +
     scale_color_manual(
       name = "",
       values = unlist(color_vec)
     ) +
   scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0.05, 0))) +
+  scale_linetype_manual(values = c("1-element" = 11, "2-element" = "solid")) +
     labs(x = "Time (s)", y = "Normalized stress") +
     theme_layout +
-    theme_fontsize(FontSize)
+    theme_fontsize(FontSize) 
   
   return(plot_fitted)
 }

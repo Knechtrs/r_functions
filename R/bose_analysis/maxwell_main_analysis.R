@@ -6,7 +6,7 @@ maxwell_main_analysis <- function(
     time = "Time", # time column name
     fit_var = "Load_norm" # column name of data to fit
   ){
-
+  
 # Clean and split data by experimental groups and name list items
   list_df <- df %>%
     na.omit() %>%
@@ -46,8 +46,22 @@ if(model_type == "two") {
 # Get fitted data and residuals
 data_fitted <- map_df(list_fitted, ~ .x$df_predict, .id = id)
 data_residuals <- map_df(list_fitted, ~ .x$df_residuals, .id = id)
-data_r_squared <- map_df(list_fitted, ~ tibble(r_squared = .x$r_squared), .id = id) %>%
-  rename_with(~ paste0("r_squared_", model_type), .cols = "r_squared")
+
+# extract single values
+extract_values <- function(list, value) {
+  var_sym <- sym(value)
+  
+  df <- map_df(list, ~ tibble(!!value := .x[[value]]), .id = id) %>%
+    rename_with(~ paste0(value, "_", model_type), .cols = all_of(value))
+  
+  return(df)
+}
+
+data_r_squared <- extract_values(list_fitted, "r_squared")
+data_aic <- extract_values(list_fitted, "aic")
+data_bic <- extract_values(list_fitted, "bic")
+data_rss <-  extract_values(list_fitted, "rss")
+data_rmse <- extract_values(list_fitted, "rmse")
 
 
 return(list(
@@ -55,6 +69,11 @@ return(list(
   fitted_data = data_fitted,
   residuals = data_residuals,
   r_squared = data_r_squared,
+  aic =  data_aic,
+  bic = data_bic,
+  rss = data_rss,
+  rmse = data_rmse,
+  n = nrow(df),
   model_fits = list_fitted,
   model_type = model_type
 ))

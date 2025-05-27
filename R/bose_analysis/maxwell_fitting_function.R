@@ -108,10 +108,19 @@ maxwell_fitting_function <- function(
   ss_residual <- sum(residuals^2)
   r_squared <- 1 - (ss_residual/ss_total)
   
+  rmse <- sqrt(mean(residuals^2))
+  aic <- AIC(best_fit)
+  bic <- BIC(best_fit)
+  
   return(list(
     optimized_params = best_fit,
     df_predict = df_predict,
     df_residuals = df_residuals,
-    r_squared = r_squared
+    r_squared = r_squared,
+    rss = ss_residual,
+    rmse = rmse,
+    aic = aic,
+    bic = bic,
+    n = nrow(df)
   ))
 }

@@ -51,7 +51,7 @@ plot_summary_points <- function(
     stat_summary(
       fun.data = mean_se,
       geom = "errorbar",
-      linewidth = linewidth,
+      linewidth = linewidth/2,
       width = 0.2,
       color = "black",
       position = dodge
@@ -59,7 +59,7 @@ plot_summary_points <- function(
     stat_summary(
       fun = mean,
       geom = "crossbar",
-      linewidth = linewidth,
+      linewidth = linewidth/2,
       width = 0.4,
       fatten = 2,
       color = "black",

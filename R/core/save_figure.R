@@ -3,7 +3,7 @@ save_figure <- function(
     filename = NULL,
     width_cm = NA,
     height_cm = NA,
-    folder = "Output/Plots/Version_1/Individual",
+    folder = "Output/Plots",
     file_type = c(".rds", ".png", ".pdf", ".svg"),
     dpi = 600
 ) {
@@ -44,15 +44,28 @@ save_figure <- function(
       ".svg" = svglite::svglite
     )
     
-    # Save with ggsave
-    ggsave(
-      filename = filepath,
-      plot = plot,
-      device = device_fun,
-      width = width_in,
-      height = height_in,
-      dpi = dpi
-    )
+    # Conditional ggsave based on SVG vs other formats
+    if (file_type != ".svg") {
+      ggsave(
+        filename = filepath,
+        plot     = plot,
+        device   = device_fun,
+        width    = width_in,
+        height   = height_in,
+        dpi      = dpi
+      )
+    } else {
+
+      svglite(
+        filename      = filepath,
+        width         = width_in,
+        height        = height_in,
+        fix_text_size = FALSE
+      )
+      
+      plot(plot)
+      invisible(dev.off())
+    }
   }
   
   invisible(filepath)

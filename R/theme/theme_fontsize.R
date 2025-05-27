@@ -1,6 +1,6 @@
 theme_fontsize <- function(
     base_size   = 6,
-    base_family = "Arial"
+    base_family = "sans"
 ) {
   # dynamically adapt margins
   margin_size <- max(5.5, base_size * 1.2)

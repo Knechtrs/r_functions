@@ -20,8 +20,6 @@ plot_paired_points <- function(
     base_family = "Arial"
 ) {
   
-  # browser()
-  
   require(ggplot2)
   require(dplyr)
   require(rlang)
@@ -113,7 +111,7 @@ plot_paired_points <- function(
   if (!is.null(facet)) {
     p <- p + facet_wrap(facets = facet, scales = facet_scales)
   }
-
+  
   return(p)
 }
 

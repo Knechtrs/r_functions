@@ -19,6 +19,8 @@ plot_paired_points <- function(
     facet_scales = "free"
 ) {
   
+  # browser()
+  
   require(ggplot2)
   require(dplyr)
   require(rlang)
@@ -79,9 +81,9 @@ plot_paired_points <- function(
   
   # Only apply color scale if colorvar was originally specified
   if (!is.null(fillvar) && fillvar != "fill_dummy") {
-    p <- p + geom_point(shape = 21, size = PointSize, position= dodge)
+    p <- p + geom_point(shape = 21, size = pointsize, position= dodge)
   } else {
-    p <- p + geom_point(shape = 21, size = PointSize, fill = "white", position= dodge)
+    p <- p + geom_point(shape = 21, size = pointsize, fill = "white", position= dodge)
   }
   
   # Remaining plot layers
@@ -110,7 +112,7 @@ plot_paired_points <- function(
   if (!is.null(facet)) {
     p <- p + facet_wrap(facets = facet, scales = facet_scales)
   }
-  
+
   return(p)
 }
 

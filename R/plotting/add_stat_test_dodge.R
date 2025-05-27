@@ -5,17 +5,20 @@ add_stat_test_dodge <- function(
     Dodge = NULL, # column name of dodge variable
     dodge_width = NULL, # need to specify dodge_width
     stat_group_by = NULL, # if dodge and group are the same: need to define group_by variable for stat.test
-    test_across_group = FALSE, # set to TRUE if test across group in dodge situation 
+    test_across_group = FALSE, ## not yet in use! ## set to TRUE if test across group in dodge situation 
     test = "t.test",
     Facet = NULL, # column name for faceting
     paired = FALSE, # paired data? => set to TRUE and need to define paired id => id
     id = NULL, # paired id, indicating which pairs to compare
     FontSize = 12,
     yPosition = NULL, # if you want to set y-position of p-value label manually
+    adjust_y_position = FALSE, # set TRUE, if additional space between labels is needed
     expand_y_0 = TRUE,
-    format_pvalue_dif = NULL # optinal function to format p-values differently
+    format_pvalue_dif = NULL # optional function to format p-values differently
 
     ) {
+  
+  # browser()
 
   # Extract data from ggplot object
   df <- plot$data
@@ -104,11 +107,11 @@ add_stat_test_dodge <- function(
   } else if (test != "permutation" && !is.null(Dodge)) { # if dodge != group
     stat.test <- stat.test %>%
       rstatix::add_significance() %>%
-      add_xy_position(x = "Dodge_col", fun = "max") %>%
+      add_xy_position(x = "Group_col", fun = "max", group= "Dodge_col", dodge = if (!is.null(dodge_width)) dodge_width else plot$layers[[2]]$position$width) %>%
       dplyr::mutate(
         yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
         p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
-      )
+      ) 
   } else if (test != "permutation" && is.null(Dodge)) { # no dodge!
     stat.test <- stat.test %>%
       rstatix::add_significance() %>%
@@ -118,6 +121,15 @@ add_stat_test_dodge <- function(
         p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
       )
   } 
+  
+  # option to adjust y_position if ymax are too close together
+  if(adjust_y_position) {
+    spacing <- 0.1 # gap between brackets
+    
+    stat.test <- stat.test %>%
+      mutate(yMax = min(yMax) + (rank(yMax, ties.method = "first") - 1) * spacing) %>%
+      ungroup()
+  }
   
 # if permutation tests used
   if (test == "permutation") {

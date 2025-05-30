@@ -40,7 +40,7 @@ save_figure <- function(
     device_fun <- switch(
       file_type,
       ".png" = "png",
-      ".pdf" = cairo_pdf,
+      ".pdf" = if (capabilities("cairo")) cairo_pdf else "pdf",
       ".svg" = svglite::svglite
     )
     

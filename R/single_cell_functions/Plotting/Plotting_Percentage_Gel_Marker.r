@@ -7,6 +7,6 @@ Plotting_Percentage_Gel_Marker <- function(seurat_obj) {
     scale_fill_manual(values= Color.Gels) +
     scale_y_continuous(limits=c(0,1), expand=c(0,0)) +
     theme_fontsize()+
-    theme_Layout +
+    theme_layout +
     theme(legend.position ="bottom", legend.direction="horizontal", axis.title.x=element_blank(), legend.title=element_blank())
     }

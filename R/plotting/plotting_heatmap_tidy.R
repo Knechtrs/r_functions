@@ -16,12 +16,11 @@ plotting_heatmap_tidy <- function(
     color_breaks = 11,
     auto_palette = TRUE, # automatically switches between diverging and sequential data
     symmetric_color_scale = FALSE, # should color legend be symetric?
-    annotation_vars = NULL,  # optional tile annotations
-    annotation_order = NULL, # order of columns for splitting col_var/row_var
+    annotation_vars = NULL,  # optional tile annotations: make sure order is the same as in col_var or row_var!
+    # annotation_name = NULL, # name of columns for splitting col_var/row_var
     annotation_palettes = NULL, # color palette for annotation
     annotation_target = "column", # NEW: "column" or "row" - which axis to annotate
     row_order = NULL # option to manually define row order
-    
 ) {
   
   # browser()
@@ -103,7 +102,7 @@ plotting_heatmap_tidy <- function(
       tidyr::separate_wider_delim(
         col = !!rlang::sym(target_var_str),
         delim = "_", 
-        names = annotation_order,
+        names = annotation_vars,
         too_few = "align_start",  # Handle IDs with fewer segments
         too_many = "drop"         # Handle IDs with more segments
       )
@@ -116,6 +115,28 @@ plotting_heatmap_tidy <- function(
     }
   }
   
+  # # Convert annotation_vars to factors with desired levels
+  # for (annot_var in annotation_vars) {
+  #   if (annot_var %in% colnames(base_df)) {
+  #     if(!is.null(column_levels)) {
+  #       base_df[[annot_var]] <- factor(base_df[[annot_var]],
+  #                                     levels = column_levels[[annot_var]]) # specify levels manually
+  #     } else {
+  #     base_df[[annot_var]] <- factor(base_df[[annot_var]],
+  #                                      unique(base_df[[annot_var]])) # get automatic levels (alphabetic ordered)
+  #     }
+  #   }
+  # }
+  # 
+  # # Arrange columns using factor levels
+  # base_df <- base_df %>%
+  #   arrange(across(all_of(annotation_vars)))
+  # 
+  # # Set column order based on arranged col_var
+  # column_order <- base_df %>%
+  #   pull(!!sym(col_var_str)) %>%
+  #   unique()
+
   # Create the main heatmap with explicit strings for more robust evaluation
   Plot <- tidyHeatmap::heatmap(base_df,
                                .row = !!rlang::sym(row_var_str),
@@ -156,13 +177,13 @@ plotting_heatmap_tidy <- function(
   if (!is.null(annotation_vars)) {
     for (annot_var in annotation_vars) {
       if (annot_var %in% colnames(base_df)) {
-        
+
         # Get the palette for this annotation
         this_palette <- NULL
         if (!is.null(annotation_palettes) && !is.null(annotation_palettes[[annot_var]])) {
           this_palette <- annotation_palettes[[annot_var]]
         }
-        
+
         # Use add_tile for both column and row annotations
         Plot <- tidyHeatmap::add_tile(
           Plot,

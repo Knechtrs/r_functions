@@ -1,25 +1,47 @@
 change_signif_fontsize <- function(plot, fontsize = 8) {
+  # search terms:
+  search_cols <- c("p.signif", "p.adj", "p.adj.signif")
   # Initialize layer_index to NULL
   layer_index <- NULL
+  found_coll <- NULL
   
   # Find the layer containing p.signif
   for (i in seq_along(plot$layers)) {
     
     layer_data <- plot$layers[[i]]$data
     
-    # Check if "p.signif" exists in the column names
-    if ("p.signif" %in% colnames(layer_data)) {
+    # See which of the search_cols actually appears, if any
+    hit <- intersect(search_cols, colnames(layer_data))
+    if (length(hit) > 0) {
       layer_index <- i
-      break  # Exit the loop once found
+      found_col <- hit[1]   # if multiple match, just take the first
+      break
     }
   }
   
-  # Check if we found a layer with p.signif
   if (is.null(layer_index)) {
-    message("No layer with p.signif found")
-    return(plot)  # Return original plot unchanged
+    message("No layer with p.signif / p.adj / p.adj.signif found")
+    return(plot)
   }
   
+  # Find the layer containing p.signif
+  # for (i in seq_along(plot$layers)) {
+  #   
+  #   layer_data <- plot$layers[[i]]$data
+  #   
+  #   # Check if "p.signif" exists in the column names
+  #   if ("p.signif" %in% colnames(layer_data)) {
+  #     layer_index <- i
+  #     break  # Exit the loop once found
+  #   }
+  # }
+  # 
+  # # Check if we found a layer with p.signif
+  # if (is.null(layer_index)) {
+  #   message("No layer with p.signif found")
+  #   return(plot)  # Return original plot unchanged
+  # }
+  # 
   message("Found p-values in layer ", layer_index)
   
   # Modify the font size in the appropriate parameter

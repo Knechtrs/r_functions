@@ -9,36 +9,11 @@ library(ggpubr)
 library(rstatix)
 library(plotrix)
 
-# load custom functions that are needed
-source('/data/cephfs-1/work/groups/duda/users/knechtrs_c/Projects/Functions/basics/format_pvalue.r')
-
 # Define the plotting function without individual axis labels
-Plotting_Expression <- function(df, Marker, FontSize=10) {
-    gene_matrix <- tryCatch(
-        GetAssayData(df, assay = "RNA", slot = "data"),
-        error = function(e) {
-            message("Could not access RNA data slot: ", e$message)
-            return(NULL)
-        }
-    )
-
-    if (is.null(gene_matrix) || !(Marker %in% rownames(gene_matrix))) {
-        message(glue::glue("Marker '{Marker}' not found in RNA assay. Skipping."))
-        return(NULL)
-    }
-
-    # Add Marker expression to metadata
-    df@meta.data$MarkerExp <- df@assays$RNA$data[Marker, ]
-
-    # Calculate mean expression per donor/timepoint/gel
-    mean_expression <- df@meta.data %>%
-        # filter(!timepoint %in% "d0") %>%
-        group_by(timepoint, donor, gel) %>%
-        summarize(MarkerExp = mean(MarkerExp, na.rm = TRUE), .groups = "drop") %>%
-        arrange(timepoint, gel, donor)
+plotting_expression <- function(df, Marker, FontSize=10, base_family = "") {
 
     # Paired t-tests per timepoint between gels
-    stat.test <- mean_expression %>%
+    stat.test <- df %>%
         filter(!timepoint %in% "d0") %>%
         arrange(donor, timepoint) %>%
         group_by(timepoint) %>%
@@ -52,18 +27,8 @@ Plotting_Expression <- function(df, Marker, FontSize=10) {
             xmax = xmax +1 # account for d0
         )
 
-    # # # Summary stats per group
-    # # df.summary <- mean_expression %>%
-    # #     group_by(timepoint, gel) %>%
-    # #     summarize(
-    # #         Mean = mean(MarkerExp, na.rm = TRUE),
-    # #         sd = sd(MarkerExp, na.rm = TRUE),
-    # #         sem = std.error(MarkerExp, na.rm = TRUE),
-    # #         .groups = "drop"
-    # #     )
-
     # Dodge positions for line plotting
-    mean_expression <- mean_expression %>%
+    df <- df %>%
       mutate(Stimulus_Dodge = as.numeric(as.factor(timepoint))) %>%
       mutate(Stimulus_Dodge = case_when(
         timepoint == "d0" ~ as.numeric(as.factor(timepoint)),  # keep original
@@ -72,7 +37,7 @@ Plotting_Expression <- function(df, Marker, FontSize=10) {
       ))
 
     # Plotting
-    Plot <- mean_expression %>%
+    Plot <- df %>%
         ggplot(aes(x = timepoint, y = MarkerExp, color = gel, fill = gel)) +
         geom_line(aes(x = Stimulus_Dodge, group = interaction(donor, timepoint)), color = "black") +
         geom_point(aes(x = Stimulus_Dodge), shape = 21, size = 2, fill = "white") +
@@ -81,8 +46,8 @@ Plotting_Expression <- function(df, Marker, FontSize=10) {
         scale_color_manual(values = Color.Gels) +
         scale_fill_manual(values = Color.Gels) +
         labs(x = "Timepoint", y = "expr. (a.u.)") +
-        theme_fontsize(FontSize) +
-        theme_Layout +
+        theme_fontsize(FontSize, base_family = base_family) +
+        theme_layout +
         theme(
             legend.position = "none",
             legend.direction = "horizontal",

@@ -17,10 +17,10 @@ plotting_heatmap_tidy <- function(
     auto_palette = TRUE, # automatically switches between diverging and sequential data
     symmetric_color_scale = FALSE, # should color legend be symetric?
     annotation_vars = NULL,  # optional tile annotations: make sure order is the same as in col_var or row_var!
-    # annotation_name = NULL, # name of columns for splitting col_var/row_var
     annotation_palettes = NULL, # color palette for annotation
     annotation_target = "column", # NEW: "column" or "row" - which axis to annotate
     row_order = NULL # option to manually define row order
+    
 ) {
   
   # browser()
@@ -171,13 +171,13 @@ plotting_heatmap_tidy <- function(
                                  position = "bottom"
                                )
   )
-  
-  
+
+
   # Add annotations to the plot based on annotation_target
   if (!is.null(annotation_vars)) {
     for (annot_var in annotation_vars) {
       if (annot_var %in% colnames(base_df)) {
-
+          
         # Get the palette for this annotation
         this_palette <- NULL
         if (!is.null(annotation_palettes) && !is.null(annotation_palettes[[annot_var]])) {

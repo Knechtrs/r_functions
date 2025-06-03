@@ -1,7 +1,7 @@
 #---- perform ROC anylsis for d1 and d2 on TopFeatures_d1 ----#
 
 # create function
-ROC_analysis <- function(df, predict_var, response_var, donor_var) {
+roc_analysis <- function(df, predict_var, response_var, donor_var) {
   
   required_pkgs <- c("ggsci", "pROC", "gridExtra", "patchwork")
   for (pkg in required_pkgs) {
@@ -15,6 +15,8 @@ ROC_analysis <- function(df, predict_var, response_var, donor_var) {
     }
   }
   
+  # browser()
+  
   # calculate roc 
   roc_results <- df %>%
     group_by(Donor) %>%
@@ -26,10 +28,14 @@ ROC_analysis <- function(df, predict_var, response_var, donor_var) {
       )
     })
   
+  # only extract necessary data for lighter rds file
+  roc_df <- roc_results %>% 
+    select(!roc_obj)
+  
   #---- create donor colors ----#
 
   # arrange according to auc value
-  roc_results <- roc_results %>% 
+  roc_df <- roc_df %>% 
     arrange(desc(auc)) %>%
     ungroup() %>%
     mutate(
@@ -37,21 +43,25 @@ ROC_analysis <- function(df, predict_var, response_var, donor_var) {
     )
   
   # Use only positions 5-9 (darkest colors)
-  bg_darkest <- brewer.pal(9, "OrRd")[4:9]
+  bg_darkest <- brewer.pal(9, "PuRd")[4:9]
   donor_colors <- setNames(
-    colorRampPalette(rev(bg_darkest))(length(unique(roc_results[[donor_var]]))), 
-    unique(roc_results[[donor_var]])
+    colorRampPalette(rev(bg_darkest))(length(unique(roc_df[[donor_var]]))), 
+    unique(roc_df[[donor_var]])
   )
   
-  # plot result
-  roc_plot <- roc_results %>%
+  # get lightweight df for plot
+  df_plot <- roc_results %>%
     mutate(
       roc_data = map(roc_obj, ~ tibble(
         FPR = 1 - .x$specificities,
         TPR = .x$sensitivities
       ))
     ) %>%
-    unnest(roc_data) %>%
+    select(-roc_obj) %>% 
+    unnest(roc_data)
+    
+  # plot result
+  roc_plot <- df_plot %>%
     ggplot(aes(x = FPR, y = TPR, color = Donor)) +
     geom_line(size = 1.2) +
     scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0,1)) +
@@ -71,7 +81,7 @@ ROC_analysis <- function(df, predict_var, response_var, donor_var) {
 
  
   
-  auc_table <- tibble(roc_results %>% 
+  auc_table <- tibble(roc_df %>% 
                         select(Donor_letter, auc) %>% 
                         mutate(auc = round(auc, 2)) %>% 
                         rename("Donor" = Donor_letter)
@@ -87,7 +97,7 @@ ROC_analysis <- function(df, predict_var, response_var, donor_var) {
       core = list(
         fg_params = list(
           fontface = c(rep("bold", nrow(auc_table)), rep("plain", nrow(auc_table))),
-          col = c(donor_colors, rep("black", each = length(names(roc_results))))  # Color first column, black second
+          col = c(donor_colors, rep("black", each = length(names(roc_df))))  # Color first column, black second
         ),
         bg_params = list(fill = "transparent", col = NA)
       ),
@@ -108,6 +118,7 @@ ROC_analysis <- function(df, predict_var, response_var, donor_var) {
   
   return(list(
     Plot_ROC_curves = Plot_ROC_curves,
+    roc_df = roc_df,
     roc_results = roc_results
     ))
     

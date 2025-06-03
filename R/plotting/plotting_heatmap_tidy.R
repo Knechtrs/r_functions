@@ -115,27 +115,6 @@ plotting_heatmap_tidy <- function(
     }
   }
   
-  # # Convert annotation_vars to factors with desired levels
-  # for (annot_var in annotation_vars) {
-  #   if (annot_var %in% colnames(base_df)) {
-  #     if(!is.null(column_levels)) {
-  #       base_df[[annot_var]] <- factor(base_df[[annot_var]],
-  #                                     levels = column_levels[[annot_var]]) # specify levels manually
-  #     } else {
-  #     base_df[[annot_var]] <- factor(base_df[[annot_var]],
-  #                                      unique(base_df[[annot_var]])) # get automatic levels (alphabetic ordered)
-  #     }
-  #   }
-  # }
-  # 
-  # # Arrange columns using factor levels
-  # base_df <- base_df %>%
-  #   arrange(across(all_of(annotation_vars)))
-  # 
-  # # Set column order based on arranged col_var
-  # column_order <- base_df %>%
-  #   pull(!!sym(col_var_str)) %>%
-  #   unique()
 
   # Create the main heatmap with explicit strings for more robust evaluation
   Plot <- tidyHeatmap::heatmap(base_df,

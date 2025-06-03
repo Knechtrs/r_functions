@@ -5,6 +5,18 @@ library(ggsci)
 # create function
 ROC_analysis <- function(seurat_obj, reference_gene, GeneFeatures) {
 
+required_pkgs <- c("ggsci", "pROC", "gridExtra", "patchwork")
+  for (pkg in required_pkgs) {
+    # require() will return FALSE if the package is not installed,
+    # or if loading fails. We ask it to load quietly.
+    if (!require(pkg, character.only = TRUE, quietly = TRUE)) {
+      stop(sprintf(
+        "Package '%s' is required but not installed or could not be loaded.\n",
+        pkg
+      ))
+    }
+  }
+
   # filter out cells that have CD14 = 0 expression
     # get expression
     cd14_expression <- Seurat::GetAssayData(seurat_obj, slot = "data")["CD14", ]
@@ -36,38 +48,20 @@ ROC_analysis <- function(seurat_obj, reference_gene, GeneFeatures) {
         )
      }) %>% bind_rows()
     
-  # # Create AUC table with ordered donors
-    # auc_table <- roc_df %>%
-    #   group_by(donor, AUC) %>%
-    #   slice(1) %>%  # Keep just one row per donor
-    #   ungroup()
+  # Create AUC table with ordered donors
+    auc_table <- roc_df %>%
+      group_by(donor, AUC) %>%
+      dplyr::slice(1) %>%  # Keep just one row per donor
+      ungroup()
     
     auc_table <- tibble(
       Donor = sort(names(Roc_Results)),
       AUC = round(map_dbl(Roc_Results, ~.x$auc_value), 3)
     ) 
-    
-    # Create the tableGrob with matched colors
-    table_plot <- tableGrob(
-      auc_table,
-      rows = NULL,
-      theme = ttheme_minimal(
-        base_size = 10,
-        core = list(
-          fg_params = list(
-            fontface = c(rep("bold", nrow(auc_table)), rep("plain", nrow(auc_table))),
-            col = c(donor_colors, rep("black", each = length(names(Roc_Results))))  # Color first column, black second
-          ),
-          bg_params = list(fill = "transparent", col = NA)
-        ),
-        padding = unit(c(1, 1), "mm")
-      )
-    )
 
     return(
         list(
             roc_df     = roc_df,
-            table_plot = table_plot,
             auc_table  = auc_table,
             Roc_Results       = Roc_Results,
             reference_gene = reference_gene

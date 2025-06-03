@@ -14,6 +14,8 @@ add_stat_test_dodge <- function(
     yPosition = NULL, # if you want to set y-position of p-value label manually
     adjust_y_position = FALSE, # set TRUE, if additional space between labels is needed
     expand_y_0 = TRUE,
+    lower_ylimit = 0,
+    expand_lower_y_mult = 0,
     format_pvalue_dif = NULL # optional function to format p-values differently
 
     ) {
@@ -249,14 +251,14 @@ add_stat_test_dodge <- function(
   if (expand_y_0) {
     Plot_out <- Plot_out +
       scale_y_continuous(
-        limits = c(0, NA),
-        expand = expansion(mult = c(0, y_expand_mult))
+        limits = c(lower_ylimit, NA),
+        expand = expansion(mult = c(expand_lower_y_mult, y_expand_mult))
       )
   } else {
     Plot_out <- Plot_out +
       scale_y_continuous(
-        limits = c(0, NA),
-        expand = expansion(mult = c(0, y_expand_mult))
+        limits = c(lower_ylimit, NA),
+        expand = expansion(mult = c(expand_lower_y_mult, y_expand_mult))
       )
   }
   

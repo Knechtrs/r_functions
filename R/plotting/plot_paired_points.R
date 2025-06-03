@@ -12,11 +12,13 @@ plot_paired_points <- function(
     colors = "grey",
     fill_colors = colors,
     ylimits = c(0, NA),
+    expand_lower_y_mult = 0,
     fontsize =FontSize,
     pointsize = PointSize,
     linewidth = LineWidth,
     facet = NULL, # varible for faceting or set to NULL 
     facet_scales = "free",
+    nrow_facets = NULL,
     base_family = "Arial"
 ) {
   
@@ -90,7 +92,7 @@ plot_paired_points <- function(
   # Remaining plot layers
   p <- p +
     scale_x_discrete(limits = c(levels(as.factor(pull(data, !!sym(xvar)))))) +
-    scale_y_continuous(limits = ylimits, expand = expansion(mult = c(0, 0.05))) +
+    scale_y_continuous(limits = ylimits, expand = expansion(mult = c(expand_lower_y_mult, 0.05))) +
     theme_layout +
     theme_fontsize(fontsize, base_family) +
     theme(
@@ -111,7 +113,11 @@ plot_paired_points <- function(
   
   # facet
   if (!is.null(facet)) {
-    p <- p + facet_wrap(facets = facet, scales = facet_scales)
+      if(!is_null(nrow_facets)) {
+            p <- p + facet_wrap(facets = facet, scales = facet_scales, nrow = nrow_facets)
+            } else {
+            p <- p + facet_wrap(facets = facet, scales = facet_scales)
+            }
   }
 
   return(p)

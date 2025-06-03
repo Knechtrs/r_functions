@@ -5,6 +5,9 @@ dimplot_umap <- function(
     continuous_colors = FALSE,
     pointsize = 0.1,
     fontsize = 8,
+    facet = FALSE,
+    facet_var = NULL,
+    strip.position = "top",
     base_family = "Arial"
     ){
     
@@ -33,6 +36,10 @@ dimplot_umap <- function(
       )
     } else {
        p <- p +  scale_color_manual(values = colors)
+    }
+
+    if (facet) {
+        p <- p + facet_wrap(reformulate(facet_var), strip.position = strip.position)
     }
     
     return(p)

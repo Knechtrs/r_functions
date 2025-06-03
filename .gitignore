@@ -1,10 +1,10 @@
-
 # === RStudio and R environment ===
 .Rhistory
 .RData
 .Rproj.user/
 .Ruserdata
 *.Rproj
+**/.ipynb_checkpoints/
 
 # === Byte-compiled and temp files ===
 *.tmp

@@ -1,0 +1,208 @@
+plotting_heatmap_tidy <- function(
+    df,
+    row_var,
+    col_var,
+    value_var,
+    BrewerColor = NULL, # default: "PuOr"
+    ClusterRows = FALSE,
+    ClusterColumns = FALSE,
+    show_column_dend = FALSE,
+    show_row_dend = FALSE,
+    fontsize = 8,
+    font_size_row = fontsize,
+    font_size_col = fontsize,
+    fontsize_anno = fontsize,
+    legend_title = NULL,
+    color_breaks = 11,
+    auto_palette = TRUE, # automatically switches between diverging and sequential data
+    symmetric_color_scale = FALSE, # should color legend be symetric?
+    annotation_vars = NULL,  # optional tile annotations: make sure order is the same as in col_var or row_var!
+    annotation_palettes = NULL, # color palette for annotation
+    annotation_target = "column", # NEW: "column" or "row" - which axis to annotate
+    row_order = NULL # option to manually define row order
+    
+) {
+  
+  # browser()
+  
+  # Load required packages if not already loaded
+  required_packages <- c("dplyr", "rlang", "tidyHeatmap", "ComplexHeatmap", "circlize", "grid", "RColorBrewer", "tidyr")
+  for(pkg in required_packages) {
+    if(!requireNamespace(pkg, quietly = TRUE)) {
+      stop(paste0("Package '", pkg, "' is needed for this function to work. Please install it."))
+    }
+  }
+  
+  # NULL coalescing operator definition
+  `%||%` <- function(x, y) if (is.null(x)) y else x
+  
+  # Create strings from the NSE vars for safer evaluation
+  row_var_str <- deparse(substitute(row_var))
+  col_var_str <- deparse(substitute(col_var))
+  value_var_str <- deparse(substitute(value_var))
+  
+  # Validate annotation_target parameter
+  if (!annotation_target %in% c("column", "row")) {
+    stop("annotation_target must be either 'column' or 'row'")
+  }
+  
+  # Check if columns exist
+  if (!value_var_str %in% names(df)) {
+    stop(paste("Column", value_var_str, "not found in dataframe"))
+  }
+  if (!row_var_str %in% names(df)) {
+    stop(paste("Column", row_var_str, "not found in dataframe"))
+  }
+  if (!col_var_str %in% names(df)) {
+    stop(paste("Column", col_var_str, "not found in dataframe"))
+  }
+  
+  # Get the numeric values for color scaling - use string names to be safer
+  values_numeric <- df[[value_var_str]]
+  value_min <- min(values_numeric, na.rm = TRUE)
+  value_max <- max(values_numeric, na.rm = TRUE)
+  
+  # Optionally make scale symmetric around 0
+  if (symmetric_color_scale) {
+    max_abs <- max(abs(value_min), abs(value_max))
+    value_min <- -max_abs
+    value_max <- max_abs
+  }
+  
+  # Set color palette based on data characteristics
+  if (auto_palette) {
+    if (value_min < 0 && value_max > 0) {
+      BrewerColor <- BrewerColor %||% "PuOr"  # diverging
+    } else {
+      BrewerColor <- BrewerColor %||% "Blues" # sequential
+    }
+  } else {
+    BrewerColor <- BrewerColor %||% "Blues"  # Default
+  }
+  
+  # Create color ramp function
+  my_color_ramp <- circlize::colorRamp2(
+    breaks = seq(value_min, value_max, length.out = color_breaks),
+    colors = grDevices::colorRampPalette(rev(RColorBrewer::brewer.pal(
+      min(11, color_breaks), BrewerColor)))(color_breaks)
+  )
+  
+  # If annotations are requested, prepare the data first
+  base_df <- df
+  if (!is.null(annotation_vars)) {
+    # Create a unique ID for joining back later
+    base_df <- base_df %>% 
+      dplyr::mutate(._row_id = dplyr::row_number())
+    
+    # Choose which variable to split based on annotation_target
+    target_var_str <- if (annotation_target == "column") col_var_str else row_var_str
+    
+    # Extract metadata from the target variable
+    metadata_df <- base_df %>%
+      tidyr::separate_wider_delim(
+        col = !!rlang::sym(target_var_str),
+        delim = "_", 
+        names = annotation_vars,
+        too_few = "align_start",  # Handle IDs with fewer segments
+        too_many = "drop"         # Handle IDs with more segments
+      )
+    
+    # Join metadata back to the original dataframe
+    for (annot_var in annotation_vars) {
+      if (annot_var %in% colnames(metadata_df)) {
+        base_df[[annot_var]] <- metadata_df[[annot_var]]
+      }
+    }
+  }
+  
+  # # Convert annotation_vars to factors with desired levels
+  # for (annot_var in annotation_vars) {
+  #   if (annot_var %in% colnames(base_df)) {
+  #     if(!is.null(column_levels)) {
+  #       base_df[[annot_var]] <- factor(base_df[[annot_var]],
+  #                                     levels = column_levels[[annot_var]]) # specify levels manually
+  #     } else {
+  #     base_df[[annot_var]] <- factor(base_df[[annot_var]],
+  #                                      unique(base_df[[annot_var]])) # get automatic levels (alphabetic ordered)
+  #     }
+  #   }
+  # }
+  # 
+  # # Arrange columns using factor levels
+  # base_df <- base_df %>%
+  #   arrange(across(all_of(annotation_vars)))
+  # 
+  # # Set column order based on arranged col_var
+  # column_order <- base_df %>%
+  #   pull(!!sym(col_var_str)) %>%
+  #   unique()
+
+  # Create the main heatmap with explicit strings for more robust evaluation
+  Plot <- tidyHeatmap::heatmap(base_df,
+                               .row = !!rlang::sym(row_var_str),
+                               .column = !!rlang::sym(col_var_str),
+                               .value = !!rlang::sym(value_var_str),
+                               column_title = NULL,
+                               row_title = NULL,
+                               scale = "none",
+                               row_order = row_order,
+                               cluster_rows = ClusterRows,
+                               row_dend_reorder = ClusterRows,
+                               show_row_dend = show_row_dend,
+                               cluster_columns = ClusterColumns, 
+                               show_column_dend = show_column_dend,
+                               column_dend_reorder = ClusterColumns,
+                               show_column_dend = show_column_dend,
+                               col = my_color_ramp,
+                               row_names_gp = grid::gpar(fontsize = font_size_row),
+                               show_column_names = (font_size_row > 0),
+                               column_names_gp = grid::gpar(fontsize = font_size_col),
+                               show_column_names = (font_size_col > 0),
+                               heatmap_legend_param = list(
+                                 title = legend_title %||% value_var_str,
+                                 legend_gp = grid::gpar(fontsize = fontsize),
+                                 labels_gp = grid::gpar(fontsize = fontsize),
+                                 title_gp = grid::gpar(fontsize = fontsize, fontface = "plain"),
+                                 legend_width = grid::unit(fontsize, "pt"),
+                                 legend_height = grid::unit(fontsize * 5, "pt"),
+                                 grid_width = unit(fontsize, "pt"),
+                                 grid_height = unit(fontsize * 5, "pt"),
+                                 direction = "vertical",
+                                 position = "bottom"
+                               )
+  )
+
+
+  # Add annotations to the plot based on annotation_target
+  if (!is.null(annotation_vars)) {
+    for (annot_var in annotation_vars) {
+      if (annot_var %in% colnames(base_df)) {
+          
+        # Get the palette for this annotation
+        this_palette <- NULL
+        if (!is.null(annotation_palettes) && !is.null(annotation_palettes[[annot_var]])) {
+          this_palette <- annotation_palettes[[annot_var]]
+        }
+
+        # Use add_tile for both column and row annotations
+        Plot <- tidyHeatmap::add_tile(
+          Plot,
+          !!rlang::sym(annot_var),
+          palette = this_palette,
+          size = grid::unit(fontsize, "pt"),
+          annotation_name_gp = grid::gpar(fontsize = fontsize_anno),
+          annotation_legend_param = list(
+            labels_gp = grid::gpar(fontsize = fontsize_anno),
+            title_gp = grid::gpar(fontsize = fontsize_anno),
+            legend_width = unit(fontsize_anno, "pt"),
+            legend_height = unit(fontsize_anno, "pt"),
+            grid_width = unit(fontsize_anno, "pt"),
+            grid_height = unit(fontsize_anno, "pt")
+          )
+        )
+      }
+    }
+  }
+  
+  return(Plot)
+}

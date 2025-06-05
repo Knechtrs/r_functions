@@ -2,15 +2,15 @@ MyCorrPlot <- function(
     FontSize = 8,
     pch_size = 1,
     cl_size = 8,
-    slot_cols = 2,
-    slot_rows = 1,
-    layout_total_cols = 6,
-    layout_total_rows = 3,
-    total_width_cm = 18.3,
-    total_height_cm = 17,
+    slot_cols = 2,  # number of columns this plot occupies in patchwork
+    slot_rows = 1,  # number of rows this plot occupies
+    layout_total_cols = 6, # total number of columns in patchwork
+    layout_total_rows = 3, # total number of rows in patchwork
+    total_width_cm = 18.3, # width of overall figure
+    total_height_cm = 17, # height of overall figure
     dpi = 600,
-    scale = 1,
-    format = "png",
+    scale = 1, # scaling factor for the image
+    format = "png", # select either png or svg
     output_dir = tempdir()
 ) {
   

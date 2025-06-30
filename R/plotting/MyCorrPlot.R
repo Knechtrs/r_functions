@@ -55,7 +55,8 @@ MyCorrPlot <- function(
                      order = 'AOE',
                      diag = FALSE,
                      type = "lower",
-                     col = RColorBrewer::brewer.pal(n = 11, name = "PuOr")
+                     col = RColorBrewer::brewer.pal(n = 11, name = "PuOr"),
+                     mar = c(0,0,0,0) # add margin: bottom, left, top, right in lines
   )
   dev.off()
   

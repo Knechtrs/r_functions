@@ -5,7 +5,8 @@ save_figure <- function(
     height_cm = NA,
     folder = "Output/Plots",
     file_type = c(".rds", ".png", ".pdf", ".svg"),
-    dpi = 600
+    dpi = 600,
+    scale = 1
 ) {
   # Ensure valid file type
   file_type <- match.arg(file_type)
@@ -52,7 +53,8 @@ save_figure <- function(
         device   = device_fun,
         width    = width_in,
         height   = height_in,
-        dpi      = dpi
+        dpi      = dpi,
+        scale = scale
       )
     } else {
 

@@ -1,6 +1,11 @@
-change_signif_fontsize <- function(plot, fontsize = 8) {
+change_signif_fontsize <- function(plot, fontsize = 8, object = "p_value") {
   # search terms:
-  search_cols <- c("p.signif", "p.adj", "p.adj.signif")
+  if(object == "p_value") {
+    search_cols <- c("p.signif", "p.adj", "p.adj.signif", "npcx")
+  } else if(object == "npc") {
+    search_cols <- c("npcx", "npcy")
+  }
+ 
   # Initialize layer_index to NULL
   layer_index <- NULL
   found_coll <- NULL
@@ -45,7 +50,12 @@ change_signif_fontsize <- function(plot, fontsize = 8) {
   message("Found p-values in layer ", layer_index)
   
   # Modify the font size in the appropriate parameter
-  plot$layers[[layer_index]]$aes_params$label.size <- fontsize/2.54
+  if(object == "p_value") {
+    plot$layers[[layer_index]]$aes_params$label.size <- fontsize/2.54
+  } else if(object == "npc") {
+    plot$layers[[layer_index]]$aes_params$size <- fontsize/2.54
+  }
+  
   
   # Return the modified plot
   return(plot)

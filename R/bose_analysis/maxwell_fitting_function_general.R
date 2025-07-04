@@ -1,12 +1,26 @@
 # Generalized fitting function
 
-maxwell_model_n <- function(time, ...) { #... allows the function to accept a variable number of parameters
-  par <- list(...) # Captures all additional arguments as a list
-  n <- length(par) / 2  # Number of Maxwell elements
-  A <- unlist(par[1:n])
-  tau <- unlist(par[(n + 1):(2 * n)])
-  rowSums(sapply(1:n, function(i) A[i] * exp(-time / tau[i]))) # rowSums(...): Sum all Maxwell elements together
+maxwell_model_n <- function(time, ...) {
+  par <- list(...)
+  n <- length(par) / 2
+  A_partial <- unlist(par[1:(n-1)])  # Only fit n-1 amplitudes
+  tau <- unlist(par[n:(2*n-1)])      # All time constants
+  
+  # Last amplitude ensures sum = 1
+  A_last <- 1 - sum(A_partial)
+  A <- c(A_partial, A_last)
+  
+  rowSums(sapply(1:n, function(i) A[i] * exp(-time / tau[i])))
 }
+
+
+# maxwell_model_n <- function(time, ...) { #... allows the function to accept a variable number of parameters
+#   par <- list(...) # Captures all additional arguments as a list
+#   n <- length(par) / 2  # Number of Maxwell elements
+#   A <- unlist(par[1:n])
+#   tau <- unlist(par[(n + 1):(2 * n)])
+#   rowSums(sapply(1:n, function(i) A[i] * exp(-time / tau[i]))) # rowSums(...): Sum all Maxwell elements together
+# }
 
 maxwell_fitting_function_general <- function(
     df,
@@ -36,22 +50,37 @@ maxwell_fitting_function_general <- function(
   all_fits <- list()
   
   for (n_elements in range_elements) {
-    param_names <- c(paste0("A", 1:n_elements), paste0("tau", 1:n_elements))
+    # param_names <- c(paste0("A", 1:n_elements), paste0("tau", 1:n_elements))
+    param_names <- c(paste0("A", 1:(n_elements-1)), paste0("tau", 1:n_elements))
     formula_str <- paste0(fit_var, " ~ maxwell_model_n(", time, ", ", paste(param_names, collapse = ", "), ")")
     
-    # Generate starting values
     starting_values_list <- lapply(1:3, function(i) {
-      # 
-      # Better spacing of time constants
       log_taus <- seq(log(min(df[[time]])), log(max(df[[time]]) * 10), length.out = n_elements)
-      taus <- exp(log_taus) * runif(n_elements, 0.5, 2.0)
-
-      # More conservative amplitude distribution
-      As <- rep(0.8/n_elements, n_elements) * runif(n_elements, 0.8, 1.2)
-     
+      taus <- exp(log_taus) * runif(n_elements, 0.5, 2)
+      
+      # Only generate n_elements - 1 A parameters (last one will be calculated)
+      As <- rep(0.8/n_elements, n_elements - 1) * runif(n_elements - 1, 0.8, 1.2)
+      
+      # Ensure the sum of A parameters leaves room for the calculated last parameter
+      As <- As * (0.8 / sum(As))  # Scale so sum is reasonable
+      
       par <- setNames(c(As, taus), param_names)
       par
     })
+    
+    # # Generate starting values
+    # starting_values_list <- lapply(1:3, function(i) {
+    #   # 
+    #   # Better spacing of time constants
+    #   log_taus <- seq(log(min(df[[time]])), log(max(df[[time]]) * 10), length.out = n_elements)
+    #   taus <- exp(log_taus) * runif(n_elements, 0.5, 2.0)
+    # 
+    #   # More conservative amplitude distribution
+    #   As <- rep(0.8/n_elements, n_elements) * runif(n_elements, 0.8, 1.2)
+    #  
+    #   par <- setNames(c(As, taus), param_names)
+    #   par
+    # })
     
     
     best_fit <- NULL

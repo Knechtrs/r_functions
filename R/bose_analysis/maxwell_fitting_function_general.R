@@ -1,11 +1,11 @@
 # Generalized fitting function
 
-maxwell_model_n <- function(time, ...) {
-  par <- list(...)
-  n <- length(par) / 2
+maxwell_model_n <- function(time, ...) { #... allows the function to accept a variable number of parameters
+  par <- list(...) # Captures all additional arguments as a list
+  n <- length(par) / 2  # Number of Maxwell elements
   A <- unlist(par[1:n])
   tau <- unlist(par[(n + 1):(2 * n)])
-  rowSums(sapply(1:n, function(i) 1- A[i] * (1- exp(-time / tau[i]))))
+  rowSums(sapply(1:n, function(i) A[i] * exp(-time / tau[i]))) # rowSums(...): Sum all Maxwell elements together
 }
 
 maxwell_fitting_function_general <- function(
@@ -41,32 +41,26 @@ maxwell_fitting_function_general <- function(
     
     # Generate starting values
     starting_values_list <- lapply(1:3, function(i) {
-      
+      # 
       # Better spacing of time constants
       log_taus <- seq(log(min(df[[time]])), log(max(df[[time]]) * 10), length.out = n_elements)
       taus <- exp(log_taus) * runif(n_elements, 0.5, 2.0)
-      
+
       # More conservative amplitude distribution
       As <- rep(0.8/n_elements, n_elements) * runif(n_elements, 0.8, 1.2)
-      # 
-      # taus <- exp(seq(log(1), log(1000), length.out = n_elements)) * runif(n_elements, 0.8, 1.2)
-      # As <- runif(n_elements, 0.2, 0.8)
-      # As <- As / sum(As) * 0.95  # Ensure sum is below 1 to allow equilibrium offset
-      
-      # As <- rep(1 / n_elements, n_elements)
-      # As <- As / sum(As * runif(n_elements, 0.9, 1.1))  # keeps total near 1
-      # taus <- seq(10, 2000, length.out = n_elements) * runif(n_elements, 0.9, 1.1)
-      
-      # taus <- seq(10, 2000, length.out = n_elements) * runif(n_elements, 0.9, 1.1)
-      # As <- rep(1 / n_elements, n_elements) * runif(n_elements, 0.9, 1.1)
+     
       par <- setNames(c(As, taus), param_names)
       par
     })
     
+    
     best_fit <- NULL
     best_error <- Inf
+    fit_attempts <- 0
+    successful_fits <- 0
     
     for (start_values in starting_values_list) {
+      fit_attempts <- fit_attempts + 1
       tryCatch({
         fit <- nlsLM(
           formula = as.formula(formula_str),
@@ -76,14 +70,20 @@ maxwell_fitting_function_general <- function(
           upper = rep(Inf, 2 * n_elements),
           control = nls.lm.control(maxiter = 1000)
         )
+        successful_fits <- successful_fits + 1
         current_error <- sum((df[[fit_var]] - predict(fit))^2)
         if (current_error < best_error) {
           best_fit <- fit
           best_error <- current_error
         }
       }, error = function(e) {
-        message("Fit failed for ", n_elements, " elements: ", e$message, "\n", "start values:", start_values )
+        # Silently continue to next starting value
       })
+    }
+    
+    # Only show message if all attempts failed
+    if (successful_fits == 0) {
+      message("All ", fit_attempts, " fitting attempts failed for Donor ", unique(df$PatientLetter), ": ", n_elements, " elements")
     }
     
     if (is.null(best_fit)) next
@@ -134,11 +134,13 @@ maxwell_fitting_function_general <- function(
       )
     })
   
-  df_residuals <- purrr::compact(all_fits) %>%   # remove NULLs
+  df_fit <- purrr::compact(all_fits) %>%   # remove NULLs
     purrr::map_dfr(~{
       tibble(
         n_elements = .x$n_elements,
         time = .x$df_residuals$Time,
+        stress = df[[fit_var]],
+        stress_predict = .x$df_predict$load_norm,
         residuals = .x$df_residuals$residuals
       )
     })
@@ -146,7 +148,7 @@ maxwell_fitting_function_general <- function(
   return(
     list(
       summary_table,
-      df_residuals = df_residuals
+      df_fit = df_fit
     )
   )
   

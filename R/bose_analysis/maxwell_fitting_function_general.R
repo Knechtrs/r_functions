@@ -1,87 +1,61 @@
-# Generalized fitting function
+# Required packages
+library(minpack.lm)
+library(dplyr)
+library(purrr)
+library(tibble)
 
+# General n-element Maxwell model (normalized to 1)
 maxwell_model_n <- function(time, ...) {
   par <- list(...)
   n <- length(par) / 2
-  A_partial <- unlist(par[1:(n-1)])  # Only fit n-1 amplitudes
-  tau <- unlist(par[n:(2*n-1)])      # All time constants
-  
-  # Last amplitude ensures sum = 1
-  A_last <- 1 - sum(A_partial)
-  A <- c(A_partial, A_last)
-  
-  rowSums(sapply(1:n, function(i) A[i] * exp(-time / tau[i])))
+  A <- unlist(par[1:n])
+  tau <- unlist(par[(n + 1):(2 * n)])
+  1 - rowSums(sapply(1:n, function(i) A[i] * (1 - exp(-time / tau[i]))))
 }
 
-
-# maxwell_model_n <- function(time, ...) { #... allows the function to accept a variable number of parameters
-#   par <- list(...) # Captures all additional arguments as a list
-#   n <- length(par) / 2  # Number of Maxwell elements
-#   A <- unlist(par[1:n])
-#   tau <- unlist(par[(n + 1):(2 * n)])
-#   rowSums(sapply(1:n, function(i) A[i] * exp(-time / tau[i]))) # rowSums(...): Sum all Maxwell elements together
-# }
-
+# Generalized fitting function
 maxwell_fitting_function_general <- function(
     df,
     time = "Time",
     fit_var = "load_norm",
-    model_type = 1,            # can be "one", "two", or a numeric value like 3, 4, 5
-    scan_models = FALSE,       # if TRUE, will scan from 1 to model_type
-    criterion = "AIC"          # model selection: "AIC", "BIC", or "R2"
+    model_type = 1,             # number of Maxwell elements (integer)
+    scan_models = FALSE,        # if TRUE: tries all from 1 to model_type
+    criterion = "AIC"           # model selection: "AIC", "BIC", or "R2"
 ) {
   
   # browser()
   
+  # Check
   if (nrow(df) < 3 || !all(c(time, fit_var) %in% colnames(df))) return(NULL)
   
+  # Preprocess
   df <- df[complete.cases(df[, c(time, fit_var)]), ]
   df <- df[df[[time]] > 0, ]
   if (nrow(df) < 3) return(NULL)
   
-  # Determine number of elements
-  if (model_type == "one") model_type <- 1
-  if (model_type == "two") model_type <- 2
   max_elements <- as.numeric(model_type)
-  
-  # If scan_models is TRUE: loop over models 1:max_elements
   range_elements <- if (scan_models) 1:max_elements else max_elements
   
   all_fits <- list()
   
   for (n_elements in range_elements) {
-    # param_names <- c(paste0("A", 1:n_elements), paste0("tau", 1:n_elements))
-    param_names <- c(paste0("A", 1:(n_elements-1)), paste0("tau", 1:n_elements))
+    param_names <- c(paste0("A", 1:n_elements), paste0("tau", 1:n_elements))
     formula_str <- paste0(fit_var, " ~ maxwell_model_n(", time, ", ", paste(param_names, collapse = ", "), ")")
     
-    starting_values_list <- lapply(1:3, function(i) {
-      log_taus <- seq(log(min(df[[time]])), log(max(df[[time]]) * 10), length.out = n_elements)
-      taus <- exp(log_taus) * runif(n_elements, 0.5, 2)
+    # Create multiple starting guesses
+    starting_values_list <- lapply(1:5, function(i) {
       
-      # Only generate n_elements - 1 A parameters (last one will be calculated)
-      As <- rep(0.8/n_elements, n_elements - 1) * runif(n_elements - 1, 0.8, 1.2)
+      taus <- if (n_elements == 1) {
+        mean(10, max(df[[time]]))* runif(n_elements, 0.01, 1.2)
+      } else {
+        seq(from = 10, to = max(df[[time]]), length.out = n_elements) * runif(n_elements, 0.9,1.1)
+      }
       
-      # Ensure the sum of A parameters leaves room for the calculated last parameter
-      As <- As * (0.8 / sum(As))  # Scale so sum is reasonable
-      
-      par <- setNames(c(As, taus), param_names)
-      par
+      # taus <- exp(seq(log(min(df[[time]])), log(max(df[[time]]) * 10), length.out = n_elements)) * runif(n_elements, 0.5, 1.5)
+      As <- rep(1 / n_elements, n_elements) * runif(n_elements, 0.5, 1.5)
+      As <- As / sum(As) * 0.95  # ensure A1 + A2 ... ≤ 1
+      setNames(c(As, taus), param_names)
     })
-    
-    # # Generate starting values
-    # starting_values_list <- lapply(1:3, function(i) {
-    #   # 
-    #   # Better spacing of time constants
-    #   log_taus <- seq(log(min(df[[time]])), log(max(df[[time]]) * 10), length.out = n_elements)
-    #   taus <- exp(log_taus) * runif(n_elements, 0.5, 2.0)
-    # 
-    #   # More conservative amplitude distribution
-    #   As <- rep(0.8/n_elements, n_elements) * runif(n_elements, 0.8, 1.2)
-    #  
-    #   par <- setNames(c(As, taus), param_names)
-    #   par
-    # })
-    
     
     best_fit <- NULL
     best_error <- Inf
@@ -95,102 +69,89 @@ maxwell_fitting_function_general <- function(
           formula = as.formula(formula_str),
           data = df,
           start = start_values,
-          lower = rep(0.0001, 2 * n_elements),
-          upper = rep(Inf, 2 * n_elements),
+          lower = c(rep(0.0001, n_elements), rep(1, n_elements)),  # A > 0, τ > 0.01
+          upper = c(rep(1, n_elements), rep(Inf, n_elements)),         # reasonable caps: A < 1, t = inf
+          # lower = rep(0.0001, 2 * n_elements),
+          # upper = rep(c(10000, 2 * n_elements),
           control = nls.lm.control(maxiter = 1000)
         )
+        pred <- predict(fit)
         successful_fits <- successful_fits + 1
-        current_error <- sum((df[[fit_var]] - predict(fit))^2)
+        current_error <- sum((df[[fit_var]] - pred)^2)
         if (current_error < best_error) {
           best_fit <- fit
           best_error <- current_error
         }
-      }, error = function(e) {
-        # Silently continue to next starting value
-      })
+      }, error = function(e) {})
     }
     
     # Only show message if all attempts failed
     if (successful_fits == 0) {
-      message("All ", fit_attempts, " fitting attempts failed for Donor ", unique(df$PatientLetter), ": ", n_elements, " elements")
+      patient_id <- if("PatientLetter" %in% colnames(df)) unique(df$PatientLetter) else "Unknown"
+      message("All ", fit_attempts, " fitting attempts failed for Donor ", patient_id, ": ", n_elements, " elements")
     }
     
-    if (is.null(best_fit)) next
-    
-    # Generate predictions and residuals
-    time_vec <- df[[time]]
-    stress_predict <- do.call(maxwell_model_n, c(list(time_vec), as.list(coef(best_fit))))
-    df_predict <- tibble(!!time := time_vec, !!fit_var := stress_predict)
-    residuals <- df[[fit_var]] - predict(best_fit, newdata = df)
-    df_residuals <- tibble(!!time := df[[time]], residuals = residuals)
-    
-    # Stats
-    ss_total <- sum((df[[fit_var]] - mean(df[[fit_var]]))^2)
-    ss_residual <- sum(residuals^2)
-    r_squared <- 1 - (ss_residual / ss_total)
-    rmse <- sqrt(mean(residuals^2))
-    aic <- AIC(best_fit)
-    bic <- BIC(best_fit)
-    
-    all_fits[[n_elements]] <- list(
-      n_elements = n_elements,
-      optimized_params = best_fit,
-      df_predict = df_predict,
-      df_residuals = df_residuals,
-      r_squared = r_squared,
-      rss = ss_residual,
-      rmse = rmse,
-      aic = aic,
-      bic = bic,
-      n = nrow(df)
-    )
+    if (!is.null(best_fit)) {
+      params <- coef(fit)
+      residuals <- df[[fit_var]] - predict(best_fit)
+      df_predict <- tibble(!!time := df[[time]], !!fit_var := predict(best_fit))
+      df_residuals <- tibble(!!time := df[[time]], residuals = residuals)
+      
+      ss_total <- sum((df[[fit_var]] - mean(df[[fit_var]]))^2)
+      ss_residual <- sum(residuals^2)
+      r_squared <- 1 - (ss_residual / ss_total)
+      rmse <- sqrt(mean(residuals^2))
+      aic <- AIC(best_fit)
+      bic <- BIC(best_fit)
+      
+      all_fits[[as.character(n_elements)]] <- list(
+        n_elements = n_elements,
+        params = params,
+        optimized_params = best_fit,
+        df_predict = df_predict,
+        df_residuals = df_residuals,
+        r_squared = r_squared,
+        rss = ss_residual,
+        rmse = rmse,
+        aic = aic,
+        bic = bic,
+        n = nrow(df)
+      )
+    }
   }
   
-  # return(all_fits)
+  # No successful fits
+  if (length(all_fits) == 0) return(NULL)
   
-  # # Assume all_fits is a list of model fit results (some may be NULL)
-  #
-  summary_table <- purrr::compact(all_fits) %>%   # remove NULLs
-    purrr::map_dfr(~{
-      tibble(
-        n_elements       = .x$n_elements,
-        r_squared        = .x$r_squared,
-        rmse             = .x$rmse,
-        rss              = .x$rss,
-        aic              = .x$aic,
-        bic              = .x$bic,
-        n_obs            = .x$n
-      )
-    })
+  # Build summary and residuals
+  summary_table <- map_dfr(all_fits, ~{
+    tibble(
+      n_elements = .x$n_elements,
+      params = .x$params,
+      r_squared  = .x$r_squared,
+      rmse       = .x$rmse,
+      rss        = .x$rss,
+      aic        = .x$aic,
+      bic        = .x$bic,
+      n_obs      = .x$n
+    )
+  })
   
+  # Create fit data frame with consistent column names
   df_fit <- purrr::compact(all_fits) %>%   # remove NULLs
     purrr::map_dfr(~{
       tibble(
         n_elements = .x$n_elements,
-        time = .x$df_residuals$Time,
-        stress = df[[fit_var]],
-        stress_predict = .x$df_predict$load_norm,
+        !!time := .x$df_residuals[[time]],  # Use consistent column naming
+        !!paste0(fit_var, "_observed") := df[[fit_var]],  # More descriptive name
+        !!paste0(fit_var, "_predicted") := .x$df_predict[[fit_var]],  # Consistent naming
         residuals = .x$df_residuals$residuals
       )
     })
   
-  return(
-    list(
-      summary_table,
+    return(list(
+      summary_table = summary_table,
       df_fit = df_fit
-    )
-  )
-  
-  # if (length(all_fits) == 0) return(NULL)
-  #
-  # # Select best model based on criterion
-  # criterion <- tolower(criterion)
-  # best_model_index <- switch(criterion,
-  #                            "aic" = which.min(sapply(all_fits, function(x) x$aic)),
-  #                            "bic" = which.min(sapply(all_fits, function(x) x$bic)),
-  #                            "r2"  = which.max(sapply(all_fits, function(x) x$r_squared)),
-  #                            stop("Invalid criterion specified")
-  # )
 
-  # return(all_fits[[best_model_index]])
+    ))
 }

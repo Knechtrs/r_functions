@@ -3,7 +3,7 @@ plot_summary_points <- function(
     xvar = NULL, 
     yvar,
     fillvar = NULL, # fill variable for color
-    Group = NULL, # group for doging
+    Group = NULL, # group for doging and summary calc
     use_dodge = FALSE,
     dodge_width = 0.5,
     jitter_width = 0.1,
@@ -30,6 +30,7 @@ plot_summary_points <- function(
     data <- data %>% mutate(fill_dummy = "all")
     fillvar <- "fill_dummy"
   }
+
   if (is.null(Group)) {
     Group <- fillvar
   }
@@ -76,9 +77,18 @@ plot_summary_points <- function(
   
   # Only apply fill scale if fillvar was originally specified
   if (!is.null(fillvar) && fillvar != "fill_dummy") {
-    p <- p + scale_fill_manual(values = colors)
+    if (is.character(colors) && length(colors) == 1 && colors %in% rownames(RColorBrewer::brewer.pal.info)) {
+      n_groups <- length(unique(data[[fillvar]]))
+      p <- p + scale_fill_manual(values = RColorBrewer::brewer.pal(n_groups, colors))
+    } else {
+      p <- p + scale_fill_manual(values = colors)
+    }
   }
-  
+
+  # # if (!is.null(fillvar) && fillvar != "fill_dummy") {
+  # #   p <- p + scale_fill_manual(values = colors)
+  # # }
+
   if (!is.null(facet)) {
     p <- p + facet_wrap(facets = facet, scales = facet_scales)
   }

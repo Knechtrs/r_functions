@@ -164,7 +164,7 @@ plotting_heatmap_tidy <- function(
         }
 
         # Use add_tile for both column and row annotations
-        Plot <- tidyHeatmap::add_tile(
+        Plot <- tidyHeatmap::annotation_tile(
           Plot,
           !!rlang::sym(annot_var),
           palette = this_palette,

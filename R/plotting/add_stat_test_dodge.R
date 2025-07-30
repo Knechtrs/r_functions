@@ -6,7 +6,7 @@ add_stat_test_dodge <- function(
     dodge_width = NULL, # need to specify dodge_width
     stat_group_by = NULL, # if dodge and group are the same: need to define group_by variable for stat.test
     test_across_group = FALSE, ## not yet in use! ## set to TRUE if test across group in dodge situation 
-    test = "t.test",
+    test = "t.test", # choose: t.test, wilcox, or permutation
     Facet = NULL, # column name for faceting
     paired = FALSE, # paired data? => set to TRUE and need to define paired id => id
     id = NULL, # paired id, indicating which pairs to compare

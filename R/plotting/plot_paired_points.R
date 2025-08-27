@@ -39,6 +39,7 @@ plot_paired_points <- function(
     data <- data %>% mutate(color_dummy = "all")
     colorvar <- "color_dummy"
   }
+  
   if (is.null(Group)) {
     Group <- colorvar
   }

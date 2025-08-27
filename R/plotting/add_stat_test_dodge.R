@@ -25,6 +25,8 @@ add_stat_test_dodge <- function(
   # Extract data from ggplot object
   df <- plot$data
   
+  df <- df %>% droplevels()
+  
   #---- rename column names ----#
   # create function to rename column names so they are always the same
   rename_Col <- function(df, Name, NewName) {
@@ -85,11 +87,31 @@ add_stat_test_dodge <- function(
   } else if (!is.null(Group) && is.null(Dodge)) {# only group
     group_vars <- c(group_vars)
   } 
+  
+  # check if n>=3 for each group_vars, otherwise filter df and print message
+  # summarise counts per group
+  tmp <- df %>%
+    group_by(!!!rlang::syms(group_vars)) %>%
+    summarise(n = n(), .groups = "drop")
+  
+  # find which groups are too small
+  low_n <- tmp %>% filter(n <= 2)
+  
+  if (nrow(low_n) > 0) {
+    message("Groups with n <= 2 were removed: ",
+            paste(apply(low_n, 1, paste, collapse = " "), collapse = "; "))
+    
+    # filter df to keep only groups with n > 2
+    df <- df %>%
+      inner_join(tmp %>% filter(n > 2),
+                 by = group_vars)
+  }
+  
 
   # Apply test
   if (length(group_vars) > 0) {
       stat.test <- df %>%
-        dplyr::group_by(!!!rlang::syms(group_vars)) %>%
+        dplyr::group_by(across(all_of(group_vars))) %>%
         test_fun(formula, paired = paired)
   } else {
       stat.test <- test_fun(df, formula, paired = paired)

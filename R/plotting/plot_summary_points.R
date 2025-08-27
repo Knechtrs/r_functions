@@ -2,7 +2,9 @@ plot_summary_points <- function(
     data, # data
     xvar = NULL, 
     yvar,
-    fillvar = NULL, # fill variable for color
+    shape_var = NULL, # variable for symbol shape
+    fill_var = NULL, # fill variable for fill color
+    color_var = NULL, # color variable for color color
     Group = NULL, # group for doging and summary calc
     use_dodge = FALSE,
     dodge_width = 0.5,
@@ -25,14 +27,20 @@ plot_summary_points <- function(
     xvar <- "x_dummy"
   }
   
-  # If fillvar or Group are NULL, use constant
-  if (is.null(fillvar)) {
+  # If fill_var or Group are NULL, use constant
+  if (is.null(fill_var)) {
     data <- data %>% mutate(fill_dummy = "all")
-    fillvar <- "fill_dummy"
+    fill_var <- "fill_dummy"
+  }
+  
+  # If color_var or Group are NULL, use constant
+  if (is.null(color_var)) {
+    data <- data %>% mutate(color_dummy = "all")
+    color_var <- "color_dummy"
   }
 
   if (is.null(Group)) {
-    Group <- fillvar
+    Group <- fill_var
   }
   
   # Positioning
@@ -43,12 +51,43 @@ plot_summary_points <- function(
     position_jitter(width = jitter_width)
   }
   
-  # Base plot
-  p <- ggplot(data, aes(x = !!sym(xvar), y = !!sym(yvar), fill = !!sym(fillvar), group = !!sym(Group))) +
-    geom_jitter(
+  # Build aesthetic mapping
+  aes_args <- list(
+    x     = sym(xvar),
+    y     = sym(yvar),
+    fill  = sym(fill_var),
+    group = sym(Group)
+  )
+  
+  ## add shape if shape_var != NULL
+  if (!is.null(shape_var)) {
+    aes_args$shape <- sym(shape_var)
+  }
+  
+  # create geom_jitter layer with and without shape option
+  if (is.null(shape_var)) {
+    geom_layer <- geom_jitter(
       size = pointsize, shape = 21, alpha = 0.8, color = "black",
       position = jitter_dodge
-    ) +
+    )
+  } else {
+    geom_layer <- geom_jitter(
+      size = pointsize, alpha = 0.8, color = "black",
+      position = jitter_dodge
+    )
+  }
+  
+  
+  # Base plot
+  p <- ggplot(data, do.call(aes, aes_args)) +
+    geom_layer +
+    # geom_jitter(
+    #   size = pointsize,
+    #   alpha = 0.8,
+    #   color = "black",
+    #   shape = if (is.null(shape_var)) 21 else NULL,
+    #   position = jitter_dodge
+    # ) +
     stat_summary(
       fun.data = mean_se,
       geom = "errorbar",
@@ -75,19 +114,29 @@ plot_summary_points <- function(
       plot.title = element_text(hjust = 0.5)
     )
   
-  # Only apply fill scale if fillvar was originally specified
-  if (!is.null(fillvar) && fillvar != "fill_dummy") {
+  # Only apply fill scale if fill_var was originally specified
+  if (!is.null(fill_var) && fill_var != "fill_dummy") {
     if (is.character(colors) && length(colors) == 1 && colors %in% rownames(RColorBrewer::brewer.pal.info)) {
-      n_groups <- length(unique(data[[fillvar]]))
+      n_groups <- length(unique(data[[fill_var]]))
       p <- p + scale_fill_manual(values = RColorBrewer::brewer.pal(n_groups, colors))
     } else {
       p <- p + scale_fill_manual(values = colors)
     }
   }
-
-  # # if (!is.null(fillvar) && fillvar != "fill_dummy") {
+  
+  # # if (!is.null(fill_var) && fill_var != "fill_dummy") {
   # #   p <- p + scale_fill_manual(values = colors)
   # # }
+  
+  # Only apply color scale if color_var was originally specified
+  if (!is.null(color_var) && color_var != "color_dummy") {
+    p <- p + scale_color_manual(values = colors)
+  }
+  
+  # Only apply shape scale if shape_var was originally specified
+  if (!is.null(shape_var)) {
+    p <- p + scale_shape_manual(values = c(21, 22, 23, 24))
+    }
 
   if (!is.null(facet)) {
     p <- p + facet_wrap(facets = facet, scales = facet_scales)

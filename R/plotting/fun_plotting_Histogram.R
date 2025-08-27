@@ -3,6 +3,7 @@ fun_plotting_Histogram <- function(
     xvar,
     yvar1,
     ColorVar,
+    quantile_lines = TRUE,
     Color = NULL,
     LineVar = NULL,
     LineCode = NULL,
@@ -18,7 +19,7 @@ fun_plotting_Histogram <- function(
     geom_density_ridges(
       aes(height = after_stat(ndensity)),
       fill = NA,
-      quantile_lines = TRUE,
+      quantile_lines = quantile_lines,
       quantile_fun = median,
       alpha = 0.3,
       scale = 0.8

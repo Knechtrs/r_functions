@@ -7,8 +7,8 @@ butterworth_filtering <- function(
     id = "exp" # sample identifier
 ) {
   # Define Butterworth filter parameters
-  order <- params$FilterParams$order     # e.g., 4
-  cutoff_freq <- params$FilterParams$cutoff  # e.g., 10 Hz
+  order <- 2 #params$FilterParams$order     # e.g., 4
+  cutoff_freq <- 0.1 # params$FilterParams$cutoff  # e.g., 10 Hz
   
   # Get only stress-relaxation portion of the data
   df_data <- df_data %>%
@@ -16,7 +16,7 @@ butterworth_filtering <- function(
     mutate(
       max_time = .data[[time]][which.max(.data[[load]])]
     ) %>%
-    filter(.data[[time]] > max_time) %>%
+    dplyr::filter(.data[[time]] > max_time) %>%
     mutate(
       !!time := .data[[time]] - max_time  # reset time to zero at max load
     ) %>%

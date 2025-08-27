@@ -151,7 +151,8 @@ maxwell_fitting_function_general <- function(
   
     return(list(
       summary_table = summary_table,
-      df_fit = df_fit
+      df_fit = df_fit,
+      all_fits = all_fits
 
     ))
 }

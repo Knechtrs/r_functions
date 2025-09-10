@@ -120,6 +120,44 @@ maxwell_fitting_function_general <- function(
     }
   }
   
+  # Compute chi-square tests for nested models if scan_models = TRUE
+  
+    # helper function
+      lrt_chisq <- function(f1, f2, model1, model2) {
+          out <- anova(f1, f2)   # ANOVA on nls fits
+          
+          rss_small <- out$`Res.Sum Sq`[1]
+          rss_large <- out$`Res.Sum Sq`[2]
+          df_small  <- out$`Res.Df`[1]
+          df_large  <- out$`Res.Df`[2]
+          
+          df_diff   <- df_small - df_large
+          rss_diff  <- rss_small - rss_large
+          sigma2    <- rss_large / df_large
+          
+          chi_sq <- rss_diff / sigma2
+          p_val  <- pchisq(chi_sq, df = df_diff, lower.tail = FALSE)
+          
+          tibble(
+            comparison = paste0("n=", model1, " vs n=", model2),
+            df_diff    = df_diff,
+            chi_sq     = chi_sq,
+            p_value    = p_val
+          )
+        }
+  
+  lrt_table <- NULL
+  if (scan_models && length(all_fits) > 1) {
+    n_models <- length(all_fits)
+    lrt_table <- map2_dfr(1:(n_models-1), 2:n_models, function(k1, k2) {
+      f1 <- all_fits[[as.character(k1)]]$optimized_params
+      f2 <- all_fits[[as.character(k2)]]$optimized_params
+      if (!is.null(f1) && !is.null(f2)) {
+        lrt_chisq(f1, f2, k1, k2)
+      }
+    })
+  }
+  
   # No successful fits
   if (length(all_fits) == 0) return(NULL)
   
@@ -152,7 +190,7 @@ maxwell_fitting_function_general <- function(
     return(list(
       summary_table = summary_table,
       df_fit = df_fit,
-      all_fits = all_fits
-
+      all_fits = all_fits,
+      lrt_table = lrt_table
     ))
 }

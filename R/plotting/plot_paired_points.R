@@ -2,6 +2,7 @@ plot_paired_points <- function(
     data,
     xvar = NULL,
     yvar,
+    yaxis_trans = NULL, # e.g. ln or log
     fillvar = NULL, # variable for fill color
     colorvar = NULL, # varibale for color. Shouldn't be NULL!
     connectVar1, # variable for connecting: within dodge
@@ -74,7 +75,8 @@ plot_paired_points <- function(
   }
   
   # Plotting
-  p <- ggplot(data, aes(x = !!sym(x_aes), y = !!sym(yvar), color = !!sym(colorvar), fill = !!sym(fillvar), group = !!sym(Group)))
+    p <- ggplot(data, aes(x = !!sym(x_aes), y = !!sym(yvar), color = !!sym(colorvar), fill = !!sym(fillvar), group = !!sym(Group)))
+
   
   # Conditional line layer
   if (!is.null(connectVar2)) {
@@ -101,6 +103,11 @@ plot_paired_points <- function(
       axis.title.x = element_blank(),
       plot.title = element_text(hjust = 0.5)
     )
+  
+  # option to transform y-axis
+  if (!is.null(yaxis_trans)) {
+    p <- p + scale_y_continuous(trans = yaxis_trans)  
+  }
   
   # Only apply color scale if colorvar was originally specified
   if (!is.null(colorvar) && colorvar != "color_dummy") {

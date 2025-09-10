@@ -30,6 +30,8 @@ outputs/*.xlsx
 outputs/figures_raw/
 outputs/figures_final/
 outputs/tables/
+reports/*.html
+
 
 # === Data folders ===
 data/processed/

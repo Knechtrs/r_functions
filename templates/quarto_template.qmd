@@ -47,6 +47,8 @@ source(here(path_Rfunctions, "R/config/load_yaml.R"))
 ```{r}
 source(here(path_Rfunctions, "R/core/create_summary_table.R"))
 source(here(path_Rfunctions, "R/core/format_pvalue.R"))
+source(here(path_Rfunctions, "R/core/save_figure.R"))
+
 ```
 
 ## Load Plotting Tools
@@ -67,7 +69,7 @@ source(here(path_Rfunctions, "R/theme/theme_layout.R"))
 ## Output Directories
 
 ```{r}
-output_dir <- here("outputs", "figures_final", "version_1")
+output_dir <- here("outputs", "figures_final")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 ```
 

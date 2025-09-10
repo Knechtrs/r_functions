@@ -4,6 +4,7 @@ plotting_heatmap_tidy <- function(
     col_var,
     value_var,
     BrewerColor = NULL, # default: "PuOr"
+    rev_color = TRUE,
     ClusterRows = FALSE,
     ClusterColumns = FALSE,
     show_column_dend = FALSE,
@@ -19,7 +20,8 @@ plotting_heatmap_tidy <- function(
     annotation_vars = NULL,  # optional tile annotations: make sure order is the same as in col_var or row_var!
     annotation_palettes = NULL, # color palette for annotation
     annotation_target = "column", # NEW: "column" or "row" - which axis to annotate
-    row_order = NULL # option to manually define row order
+    row_order = NULL, # option to manually define row order
+    col_order = NULL # option to manually define col order
     
 ) {
   
@@ -81,11 +83,21 @@ plotting_heatmap_tidy <- function(
   }
   
   # Create color ramp function
-  my_color_ramp <- circlize::colorRamp2(
-    breaks = seq(value_min, value_max, length.out = color_breaks),
-    colors = grDevices::colorRampPalette(rev(RColorBrewer::brewer.pal(
-      min(11, color_breaks), BrewerColor)))(color_breaks)
-  )
+  if(rev_color) {
+    my_color_ramp <- circlize::colorRamp2(
+      breaks = seq(value_min, value_max, length.out = color_breaks),
+      colors = grDevices::colorRampPalette(rev(RColorBrewer::brewer.pal(
+        min(11, color_breaks), BrewerColor)))(color_breaks)
+    )
+  } else {
+    my_color_ramp <- circlize::colorRamp2(
+      breaks = seq(value_min, value_max, length.out = color_breaks),
+      colors = grDevices::colorRampPalette(RColorBrewer::brewer.pal(
+        min(11, color_breaks), BrewerColor))(color_breaks)
+    )
+  }
+
+  
   
   # If annotations are requested, prepare the data first
   base_df <- df
@@ -115,6 +127,12 @@ plotting_heatmap_tidy <- function(
     }
   }
   
+  # If user supplies a manual order, coerce the column key to that factor order
+  if (!is.null(col_order)) {
+    base_df[[col_var_str]] <- factor(base_df[[col_var_str]], levels = col_order)
+    ClusterColumns <- FALSE  # ensure clustering doesn't override manual order
+  }
+  
 
   # Create the main heatmap with explicit strings for more robust evaluation
   Plot <- tidyHeatmap::heatmap(base_df,
@@ -125,6 +143,7 @@ plotting_heatmap_tidy <- function(
                                row_title = NULL,
                                scale = "none",
                                row_order = row_order,
+                               column_order = col_order,
                                cluster_rows = ClusterRows,
                                row_dend_reorder = ClusterRows,
                                show_row_dend = show_row_dend,

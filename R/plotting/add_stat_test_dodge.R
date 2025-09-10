@@ -95,7 +95,7 @@ add_stat_test_dodge <- function(
     summarise(n = n(), .groups = "drop")
   
   # find which groups are too small
-  low_n <- tmp %>% filter(n <= 2)
+  low_n <- tmp %>% dplyr::filter(n <= 2)
   
   if (nrow(low_n) > 0) {
     message("Groups with n <= 2 were removed: ",
@@ -103,7 +103,7 @@ add_stat_test_dodge <- function(
     
     # filter df to keep only groups with n > 2
     df <- df %>%
-      inner_join(tmp %>% filter(n > 2),
+      inner_join(tmp %>% dplyr::filter(n > 2),
                  by = group_vars)
   }
   

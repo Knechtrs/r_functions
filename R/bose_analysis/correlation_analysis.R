@@ -68,7 +68,8 @@ QQ_Plot <- data_corr %>%
   return(list(
     "data_corr" = data_corr,
     "QQ_plot" = QQ_Plot,
-    "cor_results" = cor_results
+    "cor_results" = cor_results,
+    "Age_covariant_results" = fit_tau2
   ))
 
 }

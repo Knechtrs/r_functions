@@ -18,7 +18,7 @@ maxwell_plot_rsquared <- function(
       data = .,
       xvar = "Model",
       yvar = "r_squared",
-      fillvar = "Model",
+      fill_var = "Model",
       colors = c("1-element" = color1, "2-element" = color2),
       fontsize = FontSize
     )

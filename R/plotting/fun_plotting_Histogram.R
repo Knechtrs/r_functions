@@ -6,6 +6,7 @@ fun_plotting_Histogram <- function(
     quantile_lines = TRUE,
     Color = NULL,
     LineVar = NULL,
+    LineThickness = 1,
     LineCode = NULL,
     title = NULL              
 ) {
@@ -16,13 +17,14 @@ fun_plotting_Histogram <- function(
     color = {{ColorVar}},
     linetype = {{LineVar}}
   )) +
-    geom_density_ridges(
+    ggridges::geom_density_ridges(
       aes(height = after_stat(ndensity)),
       fill = NA,
       quantile_lines = quantile_lines,
       quantile_fun = median,
       alpha = 0.3,
-      scale = 0.8
+      scale = 0.8,
+      linewidth = LineThickness
     ) +
     scale_x_continuous(limits = c(NA, NA), expand = c(0, 0)) +
     labs(y = NULL, title = title)

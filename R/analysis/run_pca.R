@@ -5,9 +5,11 @@ run_pca <- function(
     scale = FALSE, # scale function in prcomps: sets sd = 1
     color_cols = NULL, # metadata columns to be used for both coloring and annotation
     fontsize = 8,
+    fontsize_loading = fontsize, # adjust only loading fontsize
     pointsize = 3,
     color_values = NULL, # colors for color_cols values,
-    add_loadings = FALSE # should loadings be shonw in plot?
+    add_loadings = FALSE, # should loadings be shonw in plot?
+    add_points = TRUE # set FALSE if you only want to plot loadings
     ) {
   
   # browser()
@@ -75,7 +77,7 @@ run_pca <- function(
 
   # Plot colored by different factors
   plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = color_col)) +
-    geom_point(size = pointsize) +
+    (if (add_points) geom_point(size = pointsize) else geom_point(size = pointsize, alpha=0)) +
     labs(x = paste0("PC1 (", round(var_explained[1]*100, 1), "%)"),
          y = paste0("PC2 (", round(var_explained[2]*100, 1), "%)")
          ) +
@@ -107,13 +109,14 @@ run_pca <- function(
         data = loadings_df,
         aes(x = 0, y = 0, xend = PC1, yend = PC2),
         arrow = arrow(length = unit(0.2, "cm")),
+        linewidth = 0.4,
         color = "grey60"
       ) +
       geom_text_repel(
         data = loadings_df,
         aes(x = PC1, y = PC2, label = varname),
-        size = fontsize/2.54,
-        color = "grey60",
+        size = fontsize_loading/2.54,
+        color = "black",
         force = 5
       )
   }

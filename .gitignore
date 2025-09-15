@@ -1,45 +1,28 @@
-# === RStudio and R environment ===
+# R session files
 .Rhistory
 .RData
-.Rproj.user/
 .Ruserdata
-*.Rproj
-**/.ipynb_checkpoints/
 
-# === Byte-compiled and temp files ===
-*.tmp
-*.log
-*.bak
-*.swp
-*~
-.Renviron
+# RStudio project/user files
+.Rproj.user/
 
-# === OS-specific metadata ===
+# Temporary or OS-specific files
 .DS_Store
 Thumbs.db
-desktop.ini
 
-# === Hidden or auto-generated folders (if any) ===
-__pycache__/
-.Rcheck/
-
-# === Templates and Scaffolds (if not user-edited) ===
-templates/gitignore_template
-templates/new_project.sh
-templates/README_template.md
-templates/config/
-
-# === Optional: exclude dev drafts ===
-dev/
-
-# === Backups or test outputs (if any created in R/) ===
+# Build artifacts or generated files
+*.html
 *.pdf
 *.svg
+*.png
+*.docx
 *.xlsx
-*.html
-=======
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
+*.csv
 
+# renv environment files (if they ever get created here by accident)
+renv/
+renv.lock
+
+# Any local test outputs or scratch files
+dev/test_*.R
+dev/scratch_*.R

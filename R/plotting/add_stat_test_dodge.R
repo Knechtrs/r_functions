@@ -16,7 +16,10 @@ add_stat_test_dodge <- function(
     expand_y_0 = TRUE,
     lower_ylimit = 0,
     expand_lower_y_mult = 0,
-    format_pvalue_dif = NULL # optional function to format p-values differently
+    format_pvalue_dif = NULL, # optional function to format p-values differently
+    show_effectsize = FALSE,      # compute effect size 
+    effectsize_type = "g",       # "d" = Cohens: stand. mean difference (like z-score), "g = Hedges g: n<20", or "r = Wilcoxon r: with Wilcoxon test"
+    method_sd = "z" # ("rm", "av", "z", "b", "d", "r") see help
 
     ) {
   
@@ -116,9 +119,10 @@ add_stat_test_dodge <- function(
   } else {
       stat.test <- test_fun(df, formula, paired = paired)
   }
+  
 
   #----- Add significance and xy positions and plot position ----#
-  
+
   # if standard rstatix tests used
   if (!is.null(stat_group_by) && test != "permutation") { # need to calculate x-position differently, when dodge=group
     stat.test <- stat.test %>%
@@ -135,7 +139,7 @@ add_stat_test_dodge <- function(
       dplyr::mutate(
         yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
         p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
-      ) 
+      )
   } else if (test != "permutation" && is.null(Dodge)) { # no dodge!
     stat.test <- stat.test %>%
       rstatix::add_significance() %>%
@@ -144,17 +148,17 @@ add_stat_test_dodge <- function(
         yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
         p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
       )
-  } 
-  
+  }
+
   # option to adjust y_position if ymax are too close together
   if(adjust_y_position) {
     spacing <- 0.1 # gap between brackets
-    
+
     stat.test <- stat.test %>%
       mutate(yMax = min(yMax) + (rank(yMax, ties.method = "first") - 1) * spacing) %>%
       ungroup()
   }
-  
+
 # if permutation tests used
   if (test == "permutation") {
     stat.test <- stat.test %>%
@@ -166,28 +170,85 @@ add_stat_test_dodge <- function(
       ) %>%
       rename(data_nested = data) # rename to avoid stat_pvalue_manual conflict
   }
-  
+
   # adjust x-position if needed permutation
   if (test == "permutation" && !is.null(Dodge)) {
     if(!is.null(stat_group_by)) {# group==dodge
-      stat.test <- stat.test %>% 
+      stat.test <- stat.test %>%
         mutate(
           dodge_group = as.numeric(as.factor(stat_group_by)),
           xmin = dodge_group - plot$layers[[2]]$position$width/2,
           xmax = dodge_group + plot$layers[[2]]$position$width/2
-          ) %>% 
-          select(!dodge_group)    
+          ) %>%
+          select(!dodge_group)
     } else if (is.null(stat_group_by) && !is.null(Dodge)) {# group != dodge
       stat.test <- stat.test %>%
         mutate(
         dodge_group = as.numeric(as.factor(Dodge_col)),
         xmin = dodge_group - plot$layers[[2]]$position$width/2,
         xmax = dodge_group + plot$layers[[2]]$position$width/2
-        ) %>% 
+        ) %>%
         select(!dodge_group)
-      } 
+      }
   }
   
+  # ---- Add effect size ---- #
+  if (show_effectsize && test != "permutation") {
+    
+    # Decide whether to apply Hedges' correction
+    if (effectsize_type == "d") {
+      set_adjust <- FALSE 
+    } else if (effectsize_type == "g") {
+        set_adjust <- TRUE 
+    } else {
+          stop("effectsize_type must be 'd' (Cohen's d) or 'g' (Hedges' g).") 
+      }
+    
+    effectsize_tbl <- df %>%
+      dplyr::group_by(across(all_of(group_vars))) %>%
+      dplyr::group_modify(~{
+        if (paired) {
+          # Paired design → repeated_measures_d
+          out <- effectsize::repeated_measures_d(
+            yData_col ~ Group_col | ID_Col,
+            data = .x,
+            ci = 0.95,
+            method = method_sd,
+            adjust = set_adjust
+          )
+        } else {
+          # Unpaired design → cohens_d or hedges_g
+          if (effectsize_type == "d") {
+            out <- effectsize::cohens_d(
+              yData_col ~ Group_col,
+              data = .x,
+              ci = 0.95,
+              hedges.correction = FALSE
+            )
+          } else if (effectsize_type == "g") {
+            out <- effectsize::hedges_g(
+              yData_col ~ Group_col,
+              data = .x,
+              ci = 0.95
+            )
+          }
+        }
+        
+        # # Normalize column names so join always works
+        # out %>%
+        #   dplyr::rename(
+        #     effsize = dplyr::any_of(c("d_rm", "Cohens_d", "Hedges_g"))
+        #   )
+      }) %>%
+      dplyr::ungroup()
+    
+    # Join back to stat.test 
+    stat.test <- stat.test %>%
+      dplyr::left_join(effectsize_tbl, by = group_vars)
+    
+  }
+
+
   #---- for facet_wrap: re-calculate y.position ----#
   if(!is.null(Facet) && test != "permutation") {
     if(!is.null(stat_group_by)) { # if dodge = Group: also group by stat_group_by
@@ -197,55 +258,55 @@ add_stat_test_dodge <- function(
         dplyr::summarise(y_max = max(yData_col, na.rm = TRUE), .groups = "drop")
       # Step 2: Join to stat.test
       stat.test <- stat.test %>%
-        dplyr::left_join(y_max_per_facet, by = c("Facet_col", "stat_group_by")) %>% 
+        dplyr::left_join(y_max_per_facet, by = c("Facet_col", "stat_group_by")) %>%
         mutate(
-          yMax = if (!is.null(yPosition)) yPosition else y_max * 1.05 ) %>% # 1.05 adds little space between max value and bracket. 
+          yMax = if (!is.null(yPosition)) yPosition else y_max * 1.05 ) %>% # 1.05 adds little space between max value and bracket.
         select(-y_max)
-      
+
     } else { # if dodge != group
       # Step 1: Calculate max y per facet from the original data
       y_max_per_facet <- df %>%
         dplyr::group_by(Facet_col) %>%
         dplyr::summarise(y_max = max(yData_col, na.rm = TRUE), .groups = "drop")
-      
+
       # Step 2: Join to stat.test
       stat.test <- stat.test %>%
         dplyr::left_join(y_max_per_facet, by = "Facet_col") %>%
         mutate(
-          yMax = if (!is.null(yPosition)) yPosition else y_max * 1.05 ) %>% # 1.05 adds little space between max value and bracket. 
+          yMax = if (!is.null(yPosition)) yPosition else y_max * 1.05 ) %>% # 1.05 adds little space between max value and bracket.
         select(-y_max)
     }
   }
 
   #---- if values between groups in facet are wastly different. need to adjust y-position per facet!
   if (!is.null(Facet)) {
-    yMax_lookup <- stat.test %>% 
-      reframe(yMax_bigger = max(yMax), .by = "Facet_col") 
-    
+    yMax_lookup <- stat.test %>%
+      reframe(yMax_bigger = max(yMax), .by = "Facet_col")
+
     stat.test <- stat.test %>%
-      left_join(yMax_lookup, by = "Facet_col") %>% 
+      left_join(yMax_lookup, by = "Facet_col") %>%
       mutate(yMax = yMax + 0.05*yMax_bigger)
   }
-  
-    
+
+
   #---- need to rename column, so stat_pvalue_manual knows it for faceting ----#
   if(!is.null(Facet)) {
   stat.test <- stat.test %>%
     dplyr::rename(!!Facet := Facet_col)
   }
-  
+
   #---- # need to rename stat_group_by, so it is the same as in plot metadata ----#
   if(!is.null(stat_group_by)) {
     stat.test <- stat.test %>%
       dplyr::rename(!!stat_group_by := !!rlang::sym("stat_group_by"))
   }
-  
-  #---- add labels to plot ----# 
-  
+
+  #---- add labels to plot ----#
+
   # Set linetype and tip.length first: add line if comp across group factor and not dodge
   linetype_val <- if (!is.null(Dodge) && is.null(stat_group_by)) "solid" else "blank"
   tip_length_val <- if (linetype_val == "solid") 0.05 else 0
-  
+
   # Base plot with stat_pvalue_manual
   Plot_out <- plot +
     ggpubr::stat_pvalue_manual(
@@ -260,7 +321,7 @@ add_stat_test_dodge <- function(
       tip.length = tip_length_val,
       size = FontSize / 2.835
     )
-  
+
   # Determine y-axis expansion factor based on combination of Dodge and Facet
   y_expand_mult <- case_when(
     !is.null(Dodge) && !is.null(Facet) ~ 0.3,  # both dodge and facet
@@ -268,7 +329,7 @@ add_stat_test_dodge <- function(
     is.null(Dodge) && !is.null(Facet) ~ 0.25, # only facet
     is.null(Dodge) &&  is.null(Facet) ~ 0.2   # neither dodge nor facet
   )
-  
+
   # Apply scale_y_continuous with dynamic expansion
   if (expand_y_0) {
     Plot_out <- Plot_out +
@@ -283,14 +344,14 @@ add_stat_test_dodge <- function(
         expand = expansion(mult = c(expand_lower_y_mult, y_expand_mult))
       )
   }
-  
+
   # Final plot
   Plot_out
-  
+
   # Return result
   return(list(
     Plot = Plot_out,
     data_stat = stat.test
   ))
-  
+
 }

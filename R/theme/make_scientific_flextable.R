@@ -9,7 +9,7 @@ make_scientific_flextable <- function(df, caption = NULL, footer = NULL,
   ft <- flextable(df) %>%
     # General font and size
     fontsize(size = font_size, part = "all") %>%
-    font(fontname = font_family, part = "all") %>%
+    flextable::font(fontname = font_family, part = "all") %>% 
     
     # Header formatting
     bold(part = "header") %>%

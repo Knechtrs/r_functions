@@ -4,12 +4,15 @@ run_pca <- function(
     center = TRUE, # center function in prcomps: sets mean = 0
     scale = FALSE, # scale function in prcomps: sets sd = 1
     color_cols = NULL, # metadata columns to be used for both coloring and annotation
+    shape_col = NULL,  # column to map to shape
     fontsize = 8,
     fontsize_loading = fontsize, # adjust only loading fontsize
     pointsize = 3,
     color_values = NULL, # colors for color_cols values,
+    shape_values = NULL, # manual shape values
     add_loadings = FALSE, # should loadings be shonw in plot?
-    add_points = TRUE # set FALSE if you only want to plot loadings
+    add_points = TRUE, # set FALSE if you only want to plot loadings
+    sep_symbol = "_"
     ) {
   
   # browser()
@@ -24,11 +27,11 @@ run_pca <- function(
   }
   
   # Select numeric columns for PCA
-  cytokine_data <- df %>% select(where(is.numeric))
+  df_numeric <- df %>% select(where(is.numeric))
   
   # NA check
-  if( sum(is.na(cytokine_data)) != 0) {
-    stop( message("Number of NAs in numeric data: ", sum(is.na(cytokine_data))))
+  if( sum(is.na(df_numeric)) != 0) {
+    stop( message("Number of NAs in numeric data: ", sum(is.na(df_numeric))))
   }
 
   #---- run pca ----#
@@ -41,7 +44,7 @@ run_pca <- function(
   }
   
   # Run PCA with scaling (recommended for cytokine data)
-  pca_result <- prcomp(cytokine_data, center = center, scale. = scale)
+  pca_result <- prcomp(df_numeric, center = center, scale. = scale)
   
   summary_output <- summary(pca_result)
   
@@ -70,14 +73,21 @@ run_pca <- function(
   
   if(length(color_cols) > 1) {
     pca_df <- pca_df %>%
-      unite("color_col", all_of(color_cols), sep = "_", remove = FALSE)
+      unite("color_col", all_of(color_cols), sep = sep_symbol, remove = FALSE)
   } else {
     pca_df <- pca_df %>% dplyr::rename("color_col" = color_cols)
   }
+  
+  if (!is.null(shape_col)) 
+    pca_df <- bind_cols(pca_df, df %>% select(all_of(shape_col)))
 
   # Plot colored by different factors
-  plot <- ggplot(pca_df, aes(x = PC1, y = PC2, color = color_col)) +
-    (if (add_points) geom_point(size = pointsize) else geom_point(size = pointsize, alpha=0)) +
+  plot <- ggplot(pca_df, aes(x = PC1, y = PC2)) +
+    (if (add_points)
+      geom_point(aes(color = if (!is.null(color_cols)) color_col,
+                     shape = if (!is.null(shape_col)) !!sym(shape_col)),
+                 size = pointsize)
+     else geom_point(size = pointsize, alpha = 0)) +
     labs(x = paste0("PC1 (", round(var_explained[1]*100, 1), "%)"),
          y = paste0("PC2 (", round(var_explained[2]*100, 1), "%)")
          ) +

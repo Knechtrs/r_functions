@@ -21,7 +21,9 @@ plotting_heatmap_tidy <- function(
     annotation_palettes = NULL, # color palette for annotation
     annotation_target = "column", # NEW: "column" or "row" - which axis to annotate
     row_order = NULL, # option to manually define row order
-    col_order = NULL # option to manually define col order
+    col_order = NULL, # option to manually define col order
+    split_by = NULL,         # <-- NEW ARG
+    split_axis = "column"    # <-- "column" or "row"
     
 ) {
   
@@ -133,12 +135,28 @@ plotting_heatmap_tidy <- function(
     ClusterColumns <- FALSE  # ensure clustering doesn't override manual order
   }
   
+  # dynamically get split variable if requested
+  split_vec <- NULL
+  if (!is.null(split_by)) {
+    if (!split_by %in% names(base_df)) {
+      stop(paste0("split_by column '", split_by, "' not found in base_df"))
+    }
+    
+    # Collapse to one value per column
+    split_vec <- base_df %>%
+      dplyr::distinct(.data[[col_var_str]], .data[[split_by]]) %>%
+      dplyr::arrange(.data[[col_var_str]]) %>%
+      dplyr::pull(.data[[split_by]])
+  }
+  
 
   # Create the main heatmap with explicit strings for more robust evaluation
   Plot <- tidyHeatmap::heatmap(base_df,
                                .row = !!rlang::sym(row_var_str),
                                .column = !!rlang::sym(col_var_str),
                                .value = !!rlang::sym(value_var_str),
+                               column_split = if (split_axis == "column") split_vec else NULL,
+                               row_split    = if (split_axis == "row") split_vec else NULL,
                                column_title = NULL,
                                row_title = NULL,
                                scale = "none",

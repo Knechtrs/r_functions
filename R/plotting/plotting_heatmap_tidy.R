@@ -13,6 +13,7 @@ plotting_heatmap_tidy <- function(
     font_size_row = fontsize,
     font_size_col = fontsize,
     fontsize_anno = fontsize,
+    col_angle = 90,
     legend_title = NULL,
     color_breaks = 11,
     auto_palette = TRUE, # automatically switches between diverging and sequential data
@@ -171,9 +172,10 @@ plotting_heatmap_tidy <- function(
                                show_column_dend = show_column_dend,
                                col = my_color_ramp,
                                row_names_gp = grid::gpar(fontsize = font_size_row),
-                               show_column_names = (font_size_row > 0),
+                               show_row_names = (font_size_row > 0),
                                column_names_gp = grid::gpar(fontsize = font_size_col),
                                show_column_names = (font_size_col > 0),
+                               column_names_rot = col_angle,
                                heatmap_legend_param = list(
                                  title = legend_title %||% value_var_str,
                                  legend_gp = grid::gpar(fontsize = fontsize),

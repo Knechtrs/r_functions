@@ -16,7 +16,10 @@ add_stat_test_dodge <- function(
     expand_y_0 = TRUE,
     lower_ylimit = 0,
     expand_lower_y_mult = 0,
+    show_brackets = FALSE, # show lines comparing groups?
+    bracket_dist = NULL, # increase space between brackets in y-axis units
     format_pvalue_dif = NULL, # optional function to format p-values differently
+    top_align = FALSE, # top align p-value and brackets
     show_effectsize = FALSE,      # compute effect size 
     effectsize_type = "g",       # "d" = Cohens: stand. mean difference (like z-score), "g = Hedges g: n<20", or "r = Wilcoxon r: with Wilcoxon test"
     method_sd = "z" # ("rm", "av", "z", "b", "d", "r") see help
@@ -149,17 +152,9 @@ add_stat_test_dodge <- function(
         p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
       )
   }
+  
 
-  # option to adjust y_position if ymax are too close together
-  if(adjust_y_position) {
-    spacing <- 0.1 # gap between brackets
-
-    stat.test <- stat.test %>%
-      mutate(yMax = min(yMax) + (rank(yMax, ties.method = "first") - 1) * spacing) %>%
-      ungroup()
-  }
-
-# if permutation tests used
+  # adjust x-position if needed permutation if permutation tests used
   if (test == "permutation") {
     stat.test <- stat.test %>%
       mutate(
@@ -171,26 +166,57 @@ add_stat_test_dodge <- function(
       rename(data_nested = data) # rename to avoid stat_pvalue_manual conflict
   }
 
-  # adjust x-position if needed permutation
-  if (test == "permutation" && !is.null(Dodge)) {
-    if(!is.null(stat_group_by)) {# group==dodge
-      stat.test <- stat.test %>%
-        mutate(
-          dodge_group = as.numeric(as.factor(stat_group_by)),
-          xmin = dodge_group - plot$layers[[2]]$position$width/2,
-          xmax = dodge_group + plot$layers[[2]]$position$width/2
-          ) %>%
-          select(!dodge_group)
-    } else if (is.null(stat_group_by) && !is.null(Dodge)) {# group != dodge
-      stat.test <- stat.test %>%
-        mutate(
-        dodge_group = as.numeric(as.factor(Dodge_col)),
-        xmin = dodge_group - plot$layers[[2]]$position$width/2,
-        xmax = dodge_group + plot$layers[[2]]$position$width/2
-        ) %>%
-        select(!dodge_group)
-      }
+  
+  # If permutation test and no Dodge provided: map group1/group2 to global x positions
+  if (test == "permutation" && is.null(Dodge)) {
+    x_levels <- levels(factor(plot$data[[Group]]))
+    stat.test <- stat.test %>%
+      dplyr::mutate(
+        xmin = match(group1, x_levels),
+        xmax = match(group2, x_levels)
+      )
   }
+  # if (test == "permutation" && !is.null(Dodge)) {
+  #   if(!is.null(stat_group_by)) {# group==dodge
+  #     stat.test <- stat.test %>%
+  #       mutate(
+  #         dodge_group = as.numeric(as.factor(stat_group_by)),
+  #         xmin = dodge_group - plot$layers[[2]]$position$width/2,
+  #         xmax = dodge_group + plot$layers[[2]]$position$width/2
+  #         ) %>%
+  #         select(!dodge_group)
+  #   } else if (is.null(stat_group_by) && !is.null(Dodge)) {# group != dodge
+  #     stat.test <- stat.test %>%
+  #       mutate(
+  #       dodge_group = as.numeric(as.factor(Dodge_col)),
+  #       xmin = dodge_group - plot$layers[[2]]$position$width/2,
+  #       xmax = dodge_group + plot$layers[[2]]$position$width/2
+  #       ) %>%
+  #       select(!dodge_group)
+  #     }
+  # }
+  
+  # top align yMax?
+  if (top_align && nrow(stat.test) > 0) {
+    # Find global top value
+    top_val <- max(stat.test$yMax, na.rm = TRUE)
+    
+    stat.test <- stat.test %>%
+      dplyr::mutate(
+        yMax = top_val,
+        y_bracket = if (show_brackets) top_val - 0.02 * diff(range(plot$data[[yData]], na.rm = TRUE)) else y_bracket
+      )
+  }
+  
+  # option to adjust y_position if ymax are too close together
+  if(adjust_y_position) {
+    spacing <- 0.1 # gap between brackets
+    
+    stat.test <- stat.test %>%
+      mutate(yMax = min(yMax) + (rank(yMax, ties.method = "first") - 1) * spacing) %>%
+      ungroup()
+  }
+  
   
   # ---- Add effect size ---- #
   if (show_effectsize && test != "permutation") {
@@ -302,25 +328,65 @@ add_stat_test_dodge <- function(
   }
 
   #---- add labels to plot ----#
+  
+  # add brackets?
+  # adjust y-positions?
+  if (show_brackets && !is.null(stat.test) && nrow(stat.test) > 0) {
+    
+    y_range <- diff(range(plot$data[[yData]], na.rm = TRUE))
+    
+    stat.test <- stat.test %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(Facet))) %>%
+      dplyr::mutate(
+        comp_rank = rank(yMax, ties.method = "first"),
+        # raise BOTH label and bracket progressively
+        yMax = yMax + (comp_rank - 1) * bracket_dist * y_range,
+        y_bracket = yMax - 0.02 * y_range
+      ) %>%
+      dplyr::ungroup()
+    
+    Plot_out <- plot +
+      ggplot2::geom_segment(
+        data = stat.test,
+        aes(x = xmin, xend = xmax,
+            y = y_bracket, yend = y_bracket),
+        inherit.aes = FALSE
+      ) +
+      ggpubr::stat_pvalue_manual(
+        data = stat.test,
+        label = "p_formatted",
+        y.position = "yMax",  # now raised
+        xmin = "xmin",
+        xmax = "xmax",
+        vjust = -0.25,
+        linetype = "blank",
+        tip.length = 0,
+        size = FontSize / 2.835
+      )
+  }
+  
+  if (!show_brackets) {
+    
+    # Set linetype and tip.length first: add line if comp across group factor and not dodge
+    linetype_val <- if (!is.null(Dodge) && is.null(stat_group_by)) "solid" else "blank"
+    tip_length_val <- if (linetype_val == "solid") 0.05 else 0
+    
+    # Base plot with stat_pvalue_manual
+    Plot_out <- plot +
+      ggpubr::stat_pvalue_manual(
+        data = stat.test,
+        label = "p_formatted",
+        y.position = "yMax",
+        xmin = "xmin",
+        xmax = "xmax",
+        inherit.aes = FALSE,
+        vjust = -0.25,
+        linetype = linetype_val,
+        tip.length = tip_length_val,
+        size = FontSize / 2.835
+      )
+  }
 
-  # Set linetype and tip.length first: add line if comp across group factor and not dodge
-  linetype_val <- if (!is.null(Dodge) && is.null(stat_group_by)) "solid" else "blank"
-  tip_length_val <- if (linetype_val == "solid") 0.05 else 0
-
-  # Base plot with stat_pvalue_manual
-  Plot_out <- plot +
-    ggpubr::stat_pvalue_manual(
-      data = stat.test,
-      label = "p_formatted",
-      y.position = "yMax",
-      xmin = "xmin",
-      xmax = "xmax",
-      inherit.aes = FALSE,
-      vjust = -0.25,
-      linetype = linetype_val,
-      tip.length = tip_length_val,
-      size = FontSize / 2.835
-    )
 
   # Determine y-axis expansion factor based on combination of Dodge and Facet
   y_expand_mult <- case_when(
@@ -344,6 +410,7 @@ add_stat_test_dodge <- function(
         expand = expansion(mult = c(expand_lower_y_mult, y_expand_mult))
       )
   }
+  
 
   # Final plot
   Plot_out

@@ -2,14 +2,11 @@
 .Rhistory
 .RData
 .Ruserdata
-
 # RStudio project/user files
 .Rproj.user/
-
 # Temporary or OS-specific files
 .DS_Store
 Thumbs.db
-
 # Build artifacts or generated files
 *.html
 *.pdf
@@ -18,11 +15,10 @@ Thumbs.db
 *.docx
 *.xlsx
 *.csv
-
 # renv environment files (if they ever get created here by accident)
 renv/
 renv.lock
-
 # Any local test outputs or scratch files
 dev/test_*.R
 dev/scratch_*.R
+folder_structure.txt

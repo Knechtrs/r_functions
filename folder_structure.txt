@@ -1,0 +1,177 @@
+Auflistung der Ordnerpfade fÅr Volume Windows
+Volumeseriennummer : DCB1-C906
+C:.
+|   .gitignore
+|   folder_structure.txt
+|   ReadMe_folder_structure.txt
+|   R_functions.Rproj
+|   
++---dev
+|       source_folder.R
+|       
+\---R
+    +---analysis
+    |       roc_analysis.R
+    |       run_pca.R
+    |       
+    +---bose_analysis
+    |       butterworth_filtering.R
+    |       clean_unit_names.R
+    |       correlation_analysis.R
+    |       emod_analysis.R
+    |       import_process_data.R
+    |       maxwell_fitting_function.R
+    |       maxwell_fitting_function_general.R
+    |       maxwell_fit_function.R
+    |       maxwell_main_analysis.R
+    |       maxwell_model_definition.R
+    |       maxwell_plotting_function.R
+    |       maxwell_plotting_stresscurves.R
+    |       maxwell_plot_rsquared.R
+    |       plot_load_time.R
+    |       README.txt
+    |       read_units.R
+    |       stressrelax_curve_fitting.R
+    |       
+    +---config
+    |       load_yaml.R
+    |       
+    +---core
+    |       calc_regression.R
+    |       create_summary_table.R
+    |       format_pvalue.R
+    |       format_pvalue_star.R
+    |       load_rds_objects.R
+    |       log_slice.R
+    |       save_figure.R
+    |       
+    +---plotting
+    |   |   add_stat_test_dodge.R
+    |   |   change_signif_fontsize.R
+    |   |   clean_plot.r
+    |   |   fun_plotting_Histogram.R
+    |   |   MyCorrPlot.R
+    |   |   perm_test_fun.R
+    |   |   plotting_heatmap_tidy.R
+    |   |   plot_paired_points.R
+    |   |   plot_summary_points.R
+    |   |   Theme_Histogramy.R
+    |   |   
+    |   \---.ipynb_checkpoints
+    |           add_stat_test_dodge-checkpoint.R
+    |           clean_plot-checkpoint.r
+    |           plotting_heatmap_tidy-checkpoint.R
+    |           plot_paired_points-checkpoint.R
+    |           
+    +---single_cell_functions
+    |   |   untitled.r
+    |   |   
+    |   +---.ipynb_checkpoints
+    |   |       untitled-checkpoint.r
+    |   |       
+    |   +---Analysis
+    |   |   |   calculate_roc.r
+    |   |   |   ROC_analysis.r
+    |   |   |   roc_plotting.r
+    |   |   |   
+    |   |   \---.ipynb_checkpoints
+    |   |           calculate_roc-checkpoint.r
+    |   |           ROC_analysis-checkpoint.r
+    |   |           roc_plotting-checkpoint.r
+    |   |           
+    |   +---basics
+    |   |   |   format_pvalue.r
+    |   |   |   fun_ggSave.List.r
+    |   |   |   fun_ggSave.r
+    |   |   |   fun_ggSave_PDF.r
+    |   |   |   fun_ggSave_SVG.r
+    |   |   |   load_AllFunctions.r
+    |   |   |   load_function.r
+    |   |   |   PlotDim_off.r
+    |   |   |   PlotDim_on.r
+    |   |   |   
+    |   |   \---.ipynb_checkpoints
+    |   |           format_pvalue-checkpoint.r
+    |   |           fun_ggSave-checkpoint.r
+    |   |           fun_ggSave.List-checkpoint.r
+    |   |           fun_ggSave_PDF-checkpoint.r
+    |   |           fun_ggSave_SVG-checkpoint.r
+    |   |           load_AllFunctions-checkpoint.r
+    |   |           load_function-checkpoint.r
+    |   |           PlotDim_off-checkpoint.r
+    |   |           PlotDim_on-checkpoint.r
+    |   |           
+    |   +---Plotting
+    |   |   |   create_KEGG_plots.r
+    |   |   |   create_violin_plot.r
+    |   |   |   create_volcano_plot.r
+    |   |   |   dimplot_umap.r
+    |   |   |   GetMarker_Plotting.r
+    |   |   |   get_umap_plot_data.r
+    |   |   |   Plotting_Expression.r
+    |   |   |   plotting_gmm_qc.r
+    |   |   |   Plotting_heatmap_tidy.r
+    |   |   |   Plotting_Percentage_Gel.r
+    |   |   |   Plotting_Percentage_Gel_Marker.r
+    |   |   |   plot_gmm_density.r
+    |   |   |   Untitled.ipynb
+    |   |   |   untitled.r
+    |   |   |   
+    |   |   \---.ipynb_checkpoints
+    |   |           create_KEGG_plots-checkpoint.r
+    |   |           create_violin_plot-checkpoint.r
+    |   |           create_volcano_plot-checkpoint.r
+    |   |           dimplot_umap-checkpoint.r
+    |   |           GetMarker_Plotting-checkpoint.r
+    |   |           get_umap_plot_data-checkpoint.r
+    |   |           Plotting_Expression-checkpoint.r
+    |   |           plotting_gmm_qc-checkpoint.r
+    |   |           Plotting_heatmap_tidy-checkpoint.r
+    |   |           Plotting_Percentage_Gel-checkpoint.r
+    |   |           Plotting_Percentage_Gel_Marker-checkpoint.r
+    |   |           plot_gmm_density-checkpoint.r
+    |   |           Untitled-checkpoint.ipynb
+    |   |           untitled-checkpoint.r
+    |   |           
+    |   +---seurat
+    |   |   |   calculate_KEGG_Score.r
+    |   |   |   CheckClusterQuality.r
+    |   |   |   merge_seurat_objects.r
+    |   |   |   
+    |   |   \---.ipynb_checkpoints
+    |   |           calculate_KEGG_Score-checkpoint.r
+    |   |           CheckClusterQuality-checkpoint.r
+    |   |           merge_seurat_objects-checkpoint.r
+    |   |           
+    |   \---theme
+    |       |   theme_DotPlot.r
+    |       |   theme_fontsize.r
+    |       |   theme_layout.r
+    |       |   theme_UMAP.r
+    |       |   theme_Violin.r
+    |       |   theme_Volcano.r
+    |       |   
+    |       \---.ipynb_checkpoints
+    |               theme_DotPlot-checkpoint.r
+    |               theme_fontsize-checkpoint.r
+    |               theme_layout-checkpoint.r
+    |               theme_UMAP-checkpoint.r
+    |               theme_Violin-checkpoint.r
+    |               theme_Volcano-checkpoint.r
+    |               
+    +---theme
+    |   |   make_scientific_flextable.R
+    |   |   theme_fontsize.R
+    |   |   theme_layout.R
+    |   |   theme_UMAP.r
+    |   |   
+    |   \---.ipynb_checkpoints
+    |           theme_fontsize-checkpoint.R
+    |           theme_layout-checkpoint.R
+    |           
+    \---unused
+            fun_ggSave.R
+            fun_ggSave_list.R
+            fun_ggSave_PDF.R
+            fun_ggSave_SVG.R
+            

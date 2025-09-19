@@ -1,194 +1,153 @@
-perm_test_fun <- function(data, formula, paired = TRUE, n_perm = 10000, ...) {
-  # This is a special version of the function that needs to handle grouped data from dplyr
-  # Check if data is grouped
+perm_test_fun <- function(data, formula, paired = FALSE, n_perm = 10000, ...) {
+  # Handles grouped dfs (dplyr) and ungrouped
   is_grouped <- dplyr::is_grouped_df(data)
   
-  # If data is grouped, we need to handle the groups properly
   if (is_grouped) {
-    # Get the grouping variables
     group_vars <- dplyr::group_vars(data)
     
-    # Split data by groups and run test for each group
     nested_data <- data %>%
       dplyr::group_by(!!!rlang::syms(group_vars)) %>%
       tidyr::nest()
     
-    # Apply the test to each group and unnest results
     results <- nested_data %>%
       dplyr::mutate(
-        test_result = purrr::map(data, ~run_single_test(.x, formula, paired, n_perm))
+        test_result = purrr::map(data, ~ run_single_test(.x, formula, paired, n_perm))
       ) %>%
+      # drop groups that yielded 0 rows cleanly
+      dplyr::mutate(test_result = purrr::keep(test_result, ~ nrow(.x) >= 0)) %>%
       tidyr::unnest(test_result) %>%
       dplyr::ungroup()
     
     return(results)
   } else {
-    # If not grouped, just run the test on the whole dataset
     return(run_single_test(data, formula, paired, n_perm))
   }
 }
 
-# Helper function to run test on a single dataset (grouped or not)
-run_single_test <- function(data, formula, paired = TRUE, n_perm = n_perm) {
-  # Check required packages
-  required_packages <- c("dplyr", "tidyr", "coin", "rlang")
+# Always returns a tibble (possibly 0 rows). Never returns NULL.
+run_single_test <- function(dat, formula, paired = FALSE, n_perm = 10000) {
+  required_packages <- c("dplyr", "tidyr", "coin", "rlang", "purrr", "tibble")
   for (pkg in required_packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
       stop(paste("Package", pkg, "needed for this function to work. Please install it."))
     }
   }
   
-  # Extract variable names from formula
   response_var <- all.vars(formula)[1]
-  group_var <- all.vars(formula)[2]
+  group_var    <- all.vars(formula)[2]
+  id_col       <- "ID_Col"
   
-  # Get ID column name for paired test
-  id_col <- "ID_Col"  # This matches the renamed column in add_stat_test_dodge
+  # Helper: create standardized empty result tibble
+  empty_out <- tibble::tibble(
+    .y. = character(), group1 = character(), group2 = character(),
+    n1 = integer(), n2 = integer(),
+    statistic = numeric(), p = numeric(), p.adj = numeric(),
+    p.format = character(), p.signif = character(), method = character(),
+    data = list()
+  )
   
-  # Check if paired test is requested but ID column is missing
-  if (paired && !id_col %in% names(data)) {
-    stop("Paired permutation test requires an ID column. Please provide the 'id' parameter.")
+  # levels present (after dropping NAs)
+  lvls <- unique(stats::na.omit(dat[[group_var]]))
+  nlv  <- length(lvls)
+  if (nlv < 2) {
+    # nothing to compare
+    return(empty_out)
   }
   
-  # Get group levels
-  group_levels <- unique(data[[group_var]])
-  if (length(group_levels) != 2) {
-    warning("Permutation test requires exactly two groups to compare. Skipping this group.")
-    return(NULL)
-  }
-  
-  # Prepare output in the format expected by add_stat_test_dodge
-  create_output <- function(p_value, stat_value = NA, method_name = "Permutation test") {
-    # Format the output to match rstatix::t_test or rstatix::wilcox_test
-    p_signif <- if (p_value < 0.001) "***" else
-      if (p_value < 0.01) "**" else
-        if (p_value < 0.05) "*" else
-          if (p_value < 0.1) "." else "ns"
-    
-    data.frame(
-      .y. = response_var,
-      group1 = group_levels[1],
-      group2 = group_levels[2],
-      n1 = sum(!is.na(data[data[[group_var]] == group_levels[1], response_var])),
-      n2 = sum(!is.na(data[data[[group_var]] == group_levels[2], response_var])),
-      statistic = stat_value,
-      p = p_value,
-      p.adj = p_value,  # No adjustment in single test
-      p.format = format.pval(p_value, digits = 3),
-      p.signif = p_signif,
-      method = method_name,
-      stringsAsFactors = FALSE
-    )
-  }
-  
-  # For paired test - used when paired = TRUE
-  run_paired_test <- function() {
-    # Create paired data for analysis
-    paired_data <- data %>%
-      dplyr::select(!!rlang::sym(id_col), !!rlang::sym(group_var), !!rlang::sym(response_var)) %>%
-      tidyr::pivot_wider(names_from = !!rlang::sym(group_var), values_from = !!rlang::sym(response_var))
-    
-    # Calculate paired differences for effect size
-    diff_col <- paste0("diff_", group_levels[1], "_", group_levels[2])
-    paired_data[[diff_col]] <- paired_data[[group_levels[1]]] - paired_data[[group_levels[2]]]
-    
-    # Skip if all differences are NA
-    if (all(is.na(paired_data[[diff_col]]))) {
-      warning("All paired differences are NA, cannot compute permutation test.")
-      return(create_output(NA, NA, "Paired permutation test (failed)"))
+  # Inner runner that returns ONE row tibble for a two-level comparison
+  run_two_level <- function(df2, g1, g2) {
+    create_output <- function(p_value, stat_value = NA, method_name = "Permutation test") {
+      p_signif <- if (is.na(p_value)) "ns" else
+        if (p_value < 0.001) "***" else
+          if (p_value < 0.01)  "**"  else
+            if (p_value < 0.05)  "*"   else
+              if (p_value < 0.1)   "."   else "ns"
+      
+      tibble::tibble(
+        .y. = response_var,
+        group1 = g1,
+        group2 = g2,
+        n1 = sum(!is.na(df2[df2[[group_var]] == g1, response_var])),
+        n2 = sum(!is.na(df2[df2[[group_var]] == g2, response_var])),
+        statistic = stat_value,
+        p = p_value,
+        p.adj = p_value,
+        p.format = format.pval(p_value, digits = 3),
+        p.signif = p_signif,
+        method = method_name,
+        data = list(df2)  # keep for yMax downstream
+      )
     }
     
-    # Calculate mean difference as test statistic
-    obs_stat <- mean(paired_data[[diff_col]], na.rm = TRUE)
-    
-    # Prepare data for coin test (long format with complete pairs only)
-    test_data_complete <- data %>%
-      dplyr::group_by(!!rlang::sym(id_col)) %>%
-      dplyr::filter(n() == 2) %>% # Keep only complete pairs
-      dplyr::ungroup()
-    
-    # Skip if insufficient data
-    if (nrow(test_data_complete) < 4) { # Need at least 2 pairs
-      warning("Insufficient complete pairs for permutation test.")
-      return(create_output(NA, NA, "Paired permutation test (insufficient data)"))
-    }
-    
-    # Create formula for coin test
-    f <- as.formula(paste(response_var, "~", group_var, "|", id_col))
-    
-    # Run permutation test using coin
-    test_result <- tryCatch({
-      # Use oneway_test from coin with paired structure
-      test <- coin::oneway_test(
+    if (paired) {
+      if (!id_col %in% names(df2)) {
+        warning("Paired permutation test requires an ID column. Please provide 'id'.")
+        return(empty_out)
+      }
+      
+      # wide for difference + complete pairs
+      paired_w <- df2 %>%
+        dplyr::select(!!rlang::sym(id_col), !!rlang::sym(group_var), !!rlang::sym(response_var)) %>%
+        tidyr::pivot_wider(names_from = !!rlang::sym(group_var), values_from = !!rlang::sym(response_var))
+      
+      if (!all(c(g1, g2) %in% names(paired_w))) return(empty_out)
+      
+      diff_vec <- paired_w[[g1]] - paired_w[[g2]]
+      if (all(is.na(diff_vec))) return(create_output(NA, NA, "Paired permutation test (failed)"))
+      
+      obs_stat <- mean(diff_vec, na.rm = TRUE)
+      
+      df_complete <- df2 %>%
+        dplyr::group_by(!!rlang::sym(id_col)) %>%
+        dplyr::filter(n() == 2) %>%
+        dplyr::ungroup()
+      
+      if (nrow(df_complete) < 4) {
+        return(create_output(NA, NA, "Paired permutation test (insufficient data)"))
+      }
+      
+      f <- stats::as.formula(paste(response_var, "~", group_var, "|", id_col))
+      ct <- coin::oneway_test(
         formula = f,
-        data = test_data_complete,
+        data = df_complete,
         distribution = coin::approximate(nresample = n_perm),
         alternative = "two.sided"
       )
-      
-      # Extract p-value as numeric value
-      p_val <- as.numeric(coin::pvalue(test))
-      
-      if (is.na(p_val)) {
-        warning("Failed to compute p-value in permutation test.")
-        return(create_output(NA, NA, "Paired permutation test (failed)"))
-      }
-      
+      p_val <- as.numeric(coin::pvalue(ct))
       return(create_output(p_val, obs_stat, "Paired permutation test"))
-    }, 
-    error = function(e) {
-      warning("Error in paired permutation test: ", e$message)
-      return(create_output(NA, NA, "Paired permutation test (error)"))
-    })
-    
-    return(test_result)
+    } else {
+      # Independent samples permutation via coin
+      f <- stats::as.formula(paste(response_var, "~", group_var))
+      # Use mean difference as readable stat
+      obs_stat <- mean(df2[df2[[group_var]] == g1, response_var], na.rm = TRUE) -
+        mean(df2[df2[[group_var]] == g2, response_var], na.rm = TRUE)
+      
+      ct <- coin::oneway_test(
+        formula = f,
+        data = df2,
+        distribution = coin::approximate(nresample = n_perm),
+        alternative = "two.sided"
+      )
+      p_val <- as.numeric(coin::pvalue(ct))
+      return(create_output(p_val, obs_stat, "Independent permutation test"))
+    }
   }
   
-  # # For unpaired test - used when paired = FALSE
-  # run_unpaired_test <- function() {
-  #   # Create formula for coin test
-  #   f <- as.formula(paste(response_var, "~", group_var))
-  #   
-  #   # Calculate observed mean difference as test statistic
-  #   obs_stat <- mean(data[data[[group_var]] == group_levels[1], response_var], na.rm = TRUE) - 
-  #     mean(data[data[[group_var]] == group_levels[2], response_var], na.rm = TRUE)
-  #   
-  #   # Run permutation test using coin
-  #   test_result <- tryCatch({
-  #     # Use oneway_test from coin for independent samples
-  #     test <- coin::oneway_test(
-  #       formula = f,
-  #       data = data,
-  #       distribution = coin::approximate(nresample = n_perm),
-  #       alternative = "two.sided"
-  #     )
-  #     
-  #     # Extract p-value as numeric value
-  #     p_val <- as.numeric(coin::pvalue(test))
-  #     
-  #     if (is.na(p_val)) {
-  #       warning("Failed to compute p-value in permutation test.")
-  #       return(create_output(NA, NA, "Independent permutation test (failed)"))
-  #     }
-  #     
-  #     return(create_output(p_val, obs_stat, "Independent permutation test"))
-  #   }, 
-  #   error = function(e) {
-  #     warning("Error in independent permutation test: ", e$message)
-  #     return(create_output(NA, NA, "Independent permutation test (error)"))
-  #   })
-  #   
-  #   return(test_result)
-  # }
-  
-  # Run appropriate test based on paired parameter
-  if (paired) {
-    result <- run_paired_test()
-  } else {
-    # Currently the function is designed primarily for paired tests
-    warning("Independent samples permutation test may not be fully integrated with add_stat_test_dodge.")
-    result <- run_unpaired_test()
+  # If exactly 2 levels → single comparison
+  if (nlv == 2) {
+    g1 <- lvls[1]; g2 <- lvls[2]
+    df2 <- dat %>% dplyr::filter(.data[[group_var]] %in% c(g1, g2))
+    return(run_two_level(df2, g1, g2))
   }
   
-  return(result)
+  # If >2 levels → do pairwise across all combinations
+  pairs <- utils::combn(lvls, 2, simplify = FALSE)
+  out   <- purrr::map_dfr(pairs, function(pr) {
+    g1 <- pr[[1]]; g2 <- pr[[2]]
+    df2 <- dat %>% dplyr::filter(.data[[group_var]] %in% c(g1, g2))
+    run_two_level(df2, g1, g2)
+  })
+  
+  # Always return tibble
+  out
 }

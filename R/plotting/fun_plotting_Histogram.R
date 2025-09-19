@@ -8,8 +8,14 @@ fun_plotting_Histogram <- function(
     LineVar = NULL,
     LineThickness = 1,
     LineCode = NULL,
-    title = NULL              
+    title = NULL,
+    reverse_y = FALSE
 ) {
+  
+  if (reverse_y) {
+    data <- data %>%
+      mutate({{yvar1}} := forcats::fct_rev(as_factor({{yvar1}})))
+  }
 
   p <- ggplot(data, aes(
     x = {{xvar}},

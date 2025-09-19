@@ -1,6 +1,6 @@
 run_pca <- function(
     df,
-    scale_cols = NULL,  # Can be NULL or character vector of column names to group by
+    scale_cols = NULL,  # Can be NULL or character vector of column names to group by for scaling
     center = TRUE, # center function in prcomps: sets mean = 0
     scale = FALSE, # scale function in prcomps: sets sd = 1
     color_cols = NULL, # metadata columns to be used for both coloring and annotation
@@ -43,7 +43,7 @@ run_pca <- function(
     message("scaling has already been performed. Rescaling in prcomp call will overwrite previous scaling by groups")
   }
   
-  # Run PCA with scaling (recommended for cytokine data)
+  # Run PCA with scaling
   pca_result <- prcomp(df_numeric, center = center, scale. = scale)
   
   summary_output <- summary(pca_result)

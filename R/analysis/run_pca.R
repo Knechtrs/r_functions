@@ -14,7 +14,9 @@ run_pca <- function(
     add_points = TRUE, # set FALSE if you only want to plot loadings
     sep_symbol = "_",
     add_group_means = FALSE, # add group means as bigger symbol
-    group_mean_pointsize = pointsize*2
+    group_mean_pointsize = pointsize*2,
+    force = 1, # repulsion between overlapping text labels
+    force_pull = 1 # attraction between a text label and its corresponding data point, 
 ) {
   
   # browser()
@@ -144,13 +146,15 @@ run_pca <- function(
       geom_text_repel(
         data = loadings_df,
         aes(x = PC1, y = PC2, label = varname),
-        size = fontsize_loading/2.54,
+        size = fontsize_loading * 0.3528,  # convert pt → mm
         color = "black",
-        force = 5
+        force = force,
+        force_pull = force_pull
       )
   }
   
   return(list(
+    df_numeric = df_numeric,
     summary_output = summary_output,
     pca_result = pca_result,
     plot = plot

@@ -23,8 +23,8 @@ plotting_heatmap_tidy <- function(
     annotation_target = "column", # NEW: "column" or "row" - which axis to annotate
     row_order = NULL, # option to manually define row order
     col_order = NULL, # option to manually define col order
-    split_by = NULL,         # <-- NEW ARG
-    split_axis = "column"    # <-- "column" or "row"
+    show_legend = TRUE,
+    show_annotation_title = TRUE
     
 ) {
   
@@ -100,8 +100,6 @@ plotting_heatmap_tidy <- function(
     )
   }
 
-  
-  
   # If annotations are requested, prepare the data first
   base_df <- df
   if (!is.null(annotation_vars)) {
@@ -136,28 +134,13 @@ plotting_heatmap_tidy <- function(
     ClusterColumns <- FALSE  # ensure clustering doesn't override manual order
   }
   
-  # dynamically get split variable if requested
-  split_vec <- NULL
-  if (!is.null(split_by)) {
-    if (!split_by %in% names(base_df)) {
-      stop(paste0("split_by column '", split_by, "' not found in base_df"))
-    }
-    
-    # Collapse to one value per column
-    split_vec <- base_df %>%
-      dplyr::distinct(.data[[col_var_str]], .data[[split_by]]) %>%
-      dplyr::arrange(.data[[col_var_str]]) %>%
-      dplyr::pull(.data[[split_by]])
-  }
   
-
   # Create the main heatmap with explicit strings for more robust evaluation
   Plot <- tidyHeatmap::heatmap(base_df,
                                .row = !!rlang::sym(row_var_str),
                                .column = !!rlang::sym(col_var_str),
                                .value = !!rlang::sym(value_var_str),
-                               column_split = if (split_axis == "column") split_vec else NULL,
-                               row_split    = if (split_axis == "row") split_vec else NULL,
+
                                column_title = NULL,
                                row_title = NULL,
                                scale = "none",
@@ -176,6 +159,7 @@ plotting_heatmap_tidy <- function(
                                column_names_gp = grid::gpar(fontsize = font_size_col),
                                show_column_names = (font_size_col > 0),
                                column_names_rot = col_angle,
+                               show_heatmap_legend = show_legend,
                                heatmap_legend_param = list(
                                  title = legend_title %||% value_var_str,
                                  legend_gp = grid::gpar(fontsize = fontsize),
@@ -184,39 +168,30 @@ plotting_heatmap_tidy <- function(
                                  legend_width = grid::unit(fontsize, "pt"),
                                  legend_height = grid::unit(fontsize * 5, "pt"),
                                  grid_width = unit(fontsize, "pt"),
-                                 grid_height = unit(fontsize * 5, "pt"),
-                                 direction = "vertical",
-                                 position = "bottom"
+                                 grid_height = unit(fontsize * 5, "pt")
                                )
-  )
 
+  )
+  
 
   # Add annotations to the plot based on annotation_target
   if (!is.null(annotation_vars)) {
     for (annot_var in annotation_vars) {
       if (annot_var %in% colnames(base_df)) {
-          
-        # Get the palette for this annotation
-        this_palette <- NULL
-        if (!is.null(annotation_palettes) && !is.null(annotation_palettes[[annot_var]])) {
-          this_palette <- annotation_palettes[[annot_var]]
+        this_palette <- annotation_palettes[[annot_var]] %||% NULL
+        
+        # Enforce factor order before adding annotation
+        if (is.factor(base_df[[annot_var]])) {
+          base_df[[annot_var]] <- forcats::fct_inorder(base_df[[annot_var]])
         }
-
-        # Use add_tile for both column and row annotations
+        
         Plot <- tidyHeatmap::annotation_tile(
           Plot,
           !!rlang::sym(annot_var),
           palette = this_palette,
           size = grid::unit(fontsize, "pt"),
           annotation_name_gp = grid::gpar(fontsize = fontsize_anno),
-          annotation_legend_param = list(
-            labels_gp = grid::gpar(fontsize = fontsize_anno),
-            title_gp = grid::gpar(fontsize = fontsize_anno),
-            legend_width = unit(fontsize_anno, "pt"),
-            legend_height = unit(fontsize_anno, "pt"),
-            grid_width = unit(fontsize_anno, "pt"),
-            grid_height = unit(fontsize_anno, "pt")
-          )
+          show_legend = show_legend
         )
       }
     }

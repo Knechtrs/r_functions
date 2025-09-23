@@ -94,7 +94,8 @@ plot_summary_points <- function(
       linewidth = linewidth/2,
       width = 0.2,
       color = "black",
-      position = dodge
+      position = dodge,
+      show.legend = FALSE
     ) +
     stat_summary(
       fun = mean,
@@ -103,7 +104,8 @@ plot_summary_points <- function(
       width = 0.4,
       fatten = 2,
       color = "black",
-      position = dodge
+      position = dodge,
+      show.legend = FALSE
     ) +
     scale_y_continuous(limits = ylimits, expand = expansion(mult = c(0, 0.05))) +
     theme_layout +

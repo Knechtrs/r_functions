@@ -12,12 +12,14 @@ run_pca <- function(
     shape_values = NULL, # manual shape values
     add_loadings = FALSE, # should loadings be shonw in plot?
     add_points = TRUE, # set FALSE if you only want to plot loadings
-    sep_symbol = "_"
-    ) {
+    sep_symbol = "_",
+    add_group_means = FALSE, # add group means as bigger symbol
+    group_mean_pointsize = pointsize*2
+) {
   
   # browser()
   
-  # Optional grouping
+  # Optional scaling by group:
   if (!is.null(scale_cols)) {
     
     df <- df %>% 
@@ -33,15 +35,8 @@ run_pca <- function(
   if( sum(is.na(df_numeric)) != 0) {
     stop( message("Number of NAs in numeric data: ", sum(is.na(df_numeric))))
   }
-
-  #---- run pca ----#
   
-  # check input variables:
-  if(!is.null(scale_cols) && center == TRUE) {
-    message("data is already scaled. Are you sure you want center scaled data?")
-  } else if (!is.null(scale_cols) && scale == TRUE) {
-    message("scaling has already been performed. Rescaling in prcomp call will overwrite previous scaling by groups")
-  }
+  #---- run pca ----#
   
   # Run PCA with scaling
   pca_result <- prcomp(df_numeric, center = center, scale. = scale)
@@ -80,27 +75,51 @@ run_pca <- function(
   
   if (!is.null(shape_col)) 
     pca_df <- bind_cols(pca_df, df %>% select(all_of(shape_col)))
-
+  
+  # calculate mean
+  if(add_group_means) {
+    group_means <- if (!is.null(shape_col)) {
+      pca_df %>%
+        group_by(color_col, !!sym(shape_col)) %>%
+        summarise(PC1 = mean(PC1), PC2 = mean(PC2), .groups = "drop")
+    } else {
+      pca_df %>%
+        group_by(color_col) %>%
+        summarise(PC1 = mean(PC1), PC2 = mean(PC2), .groups = "drop")
+    }
+  }
+  
   # Plot colored by different factors
-  plot <- ggplot(pca_df, aes(x = PC1, y = PC2)) +
-    (if (add_points)
-      geom_point(aes(color = if (!is.null(color_cols)) color_col,
-                     shape = if (!is.null(shape_col)) !!sym(shape_col)),
-                 size = pointsize)
-     else geom_point(size = pointsize, alpha = 0)) +
-    labs(x = paste0("PC1 (", round(var_explained[1]*100, 1), "%)"),
-         y = paste0("PC2 (", round(var_explained[2]*100, 1), "%)")
-         ) +
+  base_map  <- aes(PC1, PC2, color = color_col)
+  shape_map <- if (!is.null(shape_col)) aes(shape = !!rlang::sym(shape_col)) else NULL
+ ellips_map <- aes(group = ellips_col)
+  
+  plot <- ggplot(pca_df, mapping = base_map) +
+    { if (add_points) 
+      geom_point(mapping = shape_map, size = pointsize, alpha = 0.7)
+      else NULL } +
+    { if (isTRUE(add_group_means))
+      geom_point(
+        data = group_means,
+        mapping = shape_map,
+        size = group_mean_pointsize,
+        stroke = 1.2
+      )
+      else NULL } +
+    labs(
+      x = paste0("PC1 (", round(var_explained[1]*100, 1), "%)"),
+      y = paste0("PC2 (", round(var_explained[2]*100, 1), "%)")
+    ) +
     theme_layout +
     theme_fontsize(fontsize) +
     theme(legend.title = element_blank())
   
-  if(!is.null(color_values)) {
-    plot <- plot +
-      scale_color_manual(values = color_values) +
-      theme(legend.title= element_blank())
-    }
-  
+  if (!is.null(color_values)) {
+    plot <- plot + scale_color_manual(values = color_values, drop = FALSE)
+  }
+  if (!is.null(shape_values) && !is.null(shape_col)) {
+    plot <- plot + scale_shape_manual(values = shape_values, drop = FALSE)
+  }
   
   # optional: add loadings
   if (add_loadings) {

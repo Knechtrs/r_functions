@@ -125,21 +125,18 @@ plot_summary_points <- function(
   if (!is.null(fill_var) && fill_var != "fill_dummy") {
     if (is.character(colors) && length(colors) == 1 && colors %in% rownames(RColorBrewer::brewer.pal.info)) {
       n_groups <- length(unique(data[[fill_var]]))
+      if (n_groups<3) {n_groups <- 3}
       p <- p + scale_fill_manual(values = RColorBrewer::brewer.pal(n_groups, colors))
     } else {
       p <- p + scale_fill_manual(values = colors)
     }
   }
-  
-  # # if (!is.null(fill_var) && fill_var != "fill_dummy") {
-  # #   p <- p + scale_fill_manual(values = colors)
-  # # }
-  
+
   # Only apply color scale if color_var was originally specified
   if (!is.null(color_var) && color_var != "color_dummy") {
     p <- p + scale_color_manual(values = colors)
   }
-  
+
   # Only apply shape scale if shape_var was originally specified
   if (!is.null(shape_var)) {
     p <- p + scale_shape_manual(values = c(21, 22, 23, 24))
@@ -148,6 +145,12 @@ plot_summary_points <- function(
   if (!is.null(facet)) {
     p <- p + facet_wrap(facets = facet, scales = facet_scales)
   }
+  
+  # define legend symbols correctly. 
+  p <- p + guides(
+    fill  = guide_legend(override.aes = list(shape = 21, color = "black")),
+    shape = guide_legend(override.aes = list(fill = "white", color = "black"))
+  )
   
   return(p)
 }

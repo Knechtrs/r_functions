@@ -16,6 +16,8 @@ maxwell_plotting_stresscurves <- function(
     # show_labels = TRUE
 ) {
   
+  # browser()
+  
   # optional: filter for time > t_max
   if(!is.null(t_max)) {
     result1$fitted_data <- result1$fitted_data %>% 

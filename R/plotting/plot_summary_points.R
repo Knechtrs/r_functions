@@ -17,9 +17,14 @@ plot_summary_points <- function(
     facet = NULL,
     facet_scales = "fixed"
 ) {
+  
+  # browser()
+  
   require(ggplot2)
   require(dplyr)
   require(rlang)
+  
+  data <- data %>% droplevels()
   
   # If xvar is NULL, use a constant "All"
   if (is.null(xvar)) {

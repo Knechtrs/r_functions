@@ -11,6 +11,7 @@ plot_stresscurve_tau <- function(
   
 # list_data_StressRelax <- data_stressrelax
 # facet_var = "alg_batch"
+  
 Group = "alg_batch"
 
 # define parameters:
@@ -18,7 +19,7 @@ sigma0 <- 1
 norm_den <- (A1 + A2)
 
 # extract parameters from dataframe
-coeffs <- list_maxwell_results_two$parameters %>% 
+coeffs <- list_fitted_coef %>% 
   select(Group, A1, A2, tau1, tau2) #
 
 # create data frame with tau1 and tau2 and tau_comb time values

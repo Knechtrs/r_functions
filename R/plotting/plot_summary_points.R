@@ -122,12 +122,45 @@ plot_summary_points <- function(
     )
   
   # Only apply fill scale if fill_var was originally specified
+  # if (!is.null(fill_var) && fill_var != "fill_dummy") {
+  #   if (is.character(colors) && length(colors) == 1 && colors %in% rownames(RColorBrewer::brewer.pal.info)) {
+  #     n_groups <- length(unique(data[[fill_var]]))
+  #     if (n_groups<3) {n_groups <- 3}
+  #     p <- p + scale_fill_manual(values = RColorBrewer::brewer.pal(n_groups, colors))
+  #   } else {
+  #     p <- p + scale_fill_manual(values = colors)
+  #   }
+  # }
+  # 
   if (!is.null(fill_var) && fill_var != "fill_dummy") {
-    if (is.character(colors) && length(colors) == 1 && colors %in% rownames(RColorBrewer::brewer.pal.info)) {
-      n_groups <- length(unique(data[[fill_var]]))
-      if (n_groups<3) {n_groups <- 3}
-      p <- p + scale_fill_manual(values = RColorBrewer::brewer.pal(n_groups, colors))
+    n_groups <- length(unique(data[[fill_var]]))
+    if (n_groups < 3) n_groups <- 3
+    
+    if (is.character(colors) && length(colors) == 1) {
+      # --- Case 1: RColorBrewer palette ---
+      if (colors %in% rownames(RColorBrewer::brewer.pal.info)) {
+        pal_vals <- RColorBrewer::brewer.pal(min(max(n_groups, 3), 9), colors)
+        
+        # --- Case 2: pals palette ---
+      } else if (colors %in% ls("package:pals")) {
+        pal_fun <- get(colors, envir = asNamespace("pals"))
+        pal_vals <- pal_fun(max(n_groups, 3))
+        
+        # Special handling for 'kelly' palette — remove black and white
+        if (colors == "kelly") {
+          pal_vals <- pal_fun(max(n_groups + 2, 3))
+          pal_vals <- pal_vals[-(1:2)]
+        }
+
+        # --- Case 3: default: try to interpret as single color name ---
+      } else {
+        pal_vals <- rep(colors, n_groups)
+      }
+      
+      p <- p + scale_fill_manual(values = pal_vals)
+      
     } else {
+      # --- Case 4: explicit vector of colors provided ---
       p <- p + scale_fill_manual(values = colors)
     }
   }

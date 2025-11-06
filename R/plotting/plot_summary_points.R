@@ -131,7 +131,7 @@ plot_summary_points <- function(
   #     p <- p + scale_fill_manual(values = colors)
   #   }
   # }
-  # 
+  
   if (!is.null(fill_var) && fill_var != "fill_dummy") {
     n_groups <- length(unique(data[[fill_var]]))
     if (n_groups < 3) n_groups <- 3

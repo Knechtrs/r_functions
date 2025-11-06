@@ -9,18 +9,19 @@ plot_stresscurve_tau <- function(
     colors = Color.Gels # for tau1 and tau2 plots
     ) {
   
-# list_data_StressRelax <- data_stressrelax
-# facet_var = "alg_batch"
-  
-Group = "alg_batch"
+  # browser()
+
 
 # define parameters:
 sigma0 <- 1
-norm_den <- (A1 + A2)
+# norm_den <- (A1 + A2)
 
-# extract parameters from dataframe
-coeffs <- list_fitted_coef %>% 
-  select(Group, A1, A2, tau1, tau2) #
+coeffs <- list_fitted_coef %>% select(Group, A1, A2, tau1, tau2)
+
+if(is.list(data)) {
+  data <- dplyr::bind_rows(as.list(data), .id = "PatientLetter")
+}
+
 
 # create data frame with tau1 and tau2 and tau_comb time values
 list_tau_data <- pmap(
@@ -32,7 +33,7 @@ list_tau_data <- pmap(
     tau2   = coeffs$tau2
   ),
   function(id, A1, A2, tau1, tau2, sigma0 = 1) {
-    df <- list_data_StressRelax %>% dplyr::filter(!!sym(Group) %in% id)
+    df <- data %>% dplyr::filter(!!sym(Group) %in% id)
     t <- df[[time_var]]
     norm_den <- A1 + A2
      
@@ -73,7 +74,7 @@ Plot_stresscurves_comb <- df_tau_data_sliced %>%
   scale_x_continuous(limits = c(0,3000), expand = expansion((c(0,0)))) +
   labs(x="Time (s)", y = "Normalized stress") +
   theme_layout +
-  theme_fontsize(12) +
+  theme_fontsize(FontSize) +
   theme(
     plot.title = element_text(hjust = 0.5),
     panel.spacing.x = unit(2, "lines"))
@@ -93,7 +94,7 @@ plotting_stresscurves_tau <- function(df, y_var) {
     scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0.05, 0))) +
     labs(x="Time (s)", y = "Normalized stress", title = bquote(tau[.(tau_number)] * " : early phase stress relaxation")) +
     theme_layout +
-    theme_fontsize(12) +
+    theme_fontsize(FontSize) +
     theme(plot.title = element_text(hjust = 0.5))
      
    # ----- Color scale handling -----

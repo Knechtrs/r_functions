@@ -5,6 +5,7 @@ plot_stresscurve_tau <- function(
     Group = "PatientLetter", # unique identifier of sample. e.g patient id or fast/slow
     time_var = "time", # x_var
     facet_var = "PatientLetter", # for facet: for comb plot
+    facet_scales = "free",
     color_var = "alginate", # for tau1 and tau2 plots
     colors = Color.Gels # for tau1 and tau2 plots
     ) {
@@ -63,7 +64,7 @@ Plot_stresscurves_comb <- df_tau_data_sliced %>%
     aes(x=!!sym(time_var), y= load_all, color =Tau)
   ) +
   geom_path() +
-  facet_wrap(vars(!!sym(facet_var)), scales = "free_x") +
+  facet_wrap(vars(!!sym(facet_var)), scales = facet_scales) +
   scale_color_manual(values = c(
     "load_norm" = "black",
     "stress_tau_comb" = "grey70",

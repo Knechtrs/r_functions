@@ -11,6 +11,8 @@ maxwell_plotting_stresscurves <- function(
     slice_it = FALSE, # should dataframe be log sliced? reduces file size of ggplot
     slice_points = 100, # number of points per sample
     id = "alg_batch",
+    facet_scale = "free",
+    n_row = NULL, # define number of rows
     linewidth = 1 # line width of fitted data
     # linetype = 11 # one on one off
     # show_labels = TRUE
@@ -72,7 +74,7 @@ maxwell_plotting_stresscurves <- function(
               alpha = 0.7,
               linewidth = linewidth) +
               # linetype =  linetype) + 
-    facet_wrap(reformulate(id), nrow = 2) +
+    facet_wrap(reformulate(id), if(!is.null(n_row)){nrow = n_row}, scales = facet_scale) +
     scale_color_manual(
       name = "",
       values = unlist(color_vec)

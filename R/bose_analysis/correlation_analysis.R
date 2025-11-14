@@ -8,14 +8,19 @@ correlation_analysis <- function(
     LineWidth = LineWidth
 ){
   
+  # browser()
 
 # get E-modulus and add column with patient letter id
   df_Emod <- df_Emod %>% 
-  separate(exp, into = c("PatientLetter","Patient", "PatientNumber"), sep = " ", remove = FALSE)
+  separate(exp, into = c("Patient", "PatientLetter"), sep = " ", remove = FALSE)
+  
+  df_fit <- df_fit %>% 
+    separate(exp, into = c("Patient", "PatientLetter"), sep = " ", remove = FALSE)
+  
 
 # combine meta data with Maxwell fit params
 data_corr <- df_fit %>% 
-  separate(exp, into = c("PatientLetter","Patient", "PatientNumber"), sep = " ", remove = FALSE) %>% 
+  separate(exp, into = c("Patient", "PatientLetter"), sep = " ", remove = FALSE) %>% 
   left_join(df_meta %>% select(PatientLetter, where(is.numeric)), by="PatientLetter") %>% 
   left_join(df_Emod %>% select(PatientLetter, Emod), by = "PatientLetter") %>% 
   left_join(df_tHalf %>% select(PatientLetter, Time), by = "PatientLetter") %>% 
@@ -41,7 +46,7 @@ QQ_Plot <- data_corr %>%
   stat_qq_line(color = "grey", lwd = LineWidth) + # Reference line
   stat_qq(size=PointSize) +  # Q-Q plot
   facet_wrap(~ parameter, scales="free") +
-  labs(x="Theoretical Quantiles", y="Sample Quantiles") +
+  labs(x="Theoretical quantiles", y="Sample quantiles") +
   theme_layout +
   theme_fontsize(FontSize) +
   ggtitle("Q-Q Plots") +

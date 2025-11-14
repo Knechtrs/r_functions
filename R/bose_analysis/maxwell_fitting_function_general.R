@@ -69,8 +69,8 @@ maxwell_fitting_function_general <- function(
           formula = as.formula(formula_str),
           data = df,
           start = start_values,
-          lower = c(rep(0.0001, n_elements), rep(1, n_elements)),  # A > 0, τ > 0.01
-          upper = c(rep(1, n_elements), rep(Inf, n_elements)),         # reasonable caps: A < 1, t = inf
+          lower = c(rep(0.0001, n_elements), rep(1, n_elements)),  # A > 0, τ > 1
+          upper = c(rep(1, n_elements), rep(50000, n_elements)),         # reasonable caps: A < 1, t = 50'000
           # lower = rep(0.0001, 2 * n_elements),
           # upper = rep(c(10000, 2 * n_elements),
           control = nls.lm.control(maxiter = 1000)

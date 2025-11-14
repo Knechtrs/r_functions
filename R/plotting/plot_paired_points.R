@@ -112,6 +112,9 @@ plot_paired_points <- function(
   # Only apply color scale if colorvar was originally specified
   if (!is.null(colorvar) && colorvar != "color_dummy") {
     p <- p + scale_color_manual(values = colors)
+  } else {
+    # colorvar is dummy → everything = "all"
+    p <- p + scale_color_manual(values = c(all = colors))
   }
   
   # Only apply fill scale if colorvar was originally specified

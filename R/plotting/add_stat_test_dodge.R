@@ -17,13 +17,14 @@ add_stat_test_dodge <- function(
     lower_ylimit = 0,
     expand_lower_y_mult = 0,
     show_brackets = FALSE, # show lines comparing groups?
-    bracket_dist = NULL, # increase space between brackets in y-axis units
+    bracket_dist = NULL, # increase space between brackets in y-axis units. needs to be set!
     format_pvalue_dif = NULL, # optional function to format p-values differently
     top_align = FALSE, # top align p-value and brackets
     show_effectsize = FALSE,      # compute effect size 
     effectsize_type = "g",       # "d" = Cohens: stand. mean difference (like z-score), "g = Hedges g: n<20", or "r = Wilcoxon r: with Wilcoxon test"
-    method_sd = "z" # ("rm", "av", "z", "b", "d", "r") see help
-
+    method_sd = "z", # ("rm", "av", "z", "b", "d", "r") see help
+    remove_comp_g1 = NULL, # remove specific comparison from stat.test df: group1
+    remove_comp_g2 = NULL # remove specific comparison from stat.test df: group2
     ) {
   
   # browser()
@@ -329,8 +330,50 @@ add_stat_test_dodge <- function(
 
   #---- add labels to plot ----#
   
+  ### remove certain groups from stat.test
+  if (!is.null(remove_comp_g1) && !is.null(remove_comp_g2)) {
+    stat.test <- stat.test %>%
+      dplyr::filter(!(group1 == remove_comp_g1 & group2 == remove_comp_g2))
+  }
+
+  
   # add brackets?
   # adjust y-positions?
+#  if (show_brackets && !is.null(stat.test) && nrow(stat.test) > 0) {
+#     
+#     y_range <- diff(range(plot$data[[yData]], na.rm = TRUE))
+#     
+#     stat.test <- stat.test %>%
+#       dplyr::group_by(dplyr::across(dplyr::all_of(Facet))) %>%
+#       dplyr::mutate(
+#         comp_rank = rank(yMax, ties.method = "first"),
+#         # raise BOTH label and bracket progressively
+#         yMax = yMax + (comp_rank - 1) * bracket_dist * y_range,
+#         y_bracket = yMax - 0.02 * y_range
+#       ) %>%
+#       dplyr::ungroup()
+#     
+#     Plot_out <- plot +
+#       ggplot2::geom_segment(
+#         data = stat.test,
+#         aes(x = xmin, xend = xmax,
+#             y = y_bracket, yend = y_bracket),
+#         inherit.aes = FALSE
+#       ) +
+#       ggpubr::stat_pvalue_manual(
+#         data = stat.test,
+#         label = "p_formatted",
+#         y.position = "yMax",  # now raised
+#         xmin = "xmin",
+#         xmax = "xmax",
+#         vjust = -0.25,
+#         linetype = "blank",
+#         tip.length = 0,
+#         size = FontSize / 2.835,
+#         inherit.aes = FALSE    # <- IMPORTANT
+#       )
+# }
+  
   if (show_brackets && !is.null(stat.test) && nrow(stat.test) > 0) {
     
     y_range <- diff(range(plot$data[[yData]], na.rm = TRUE))
@@ -361,7 +404,8 @@ add_stat_test_dodge <- function(
         vjust = -0.25,
         linetype = "blank",
         tip.length = 0,
-        size = FontSize / 2.835
+        size = FontSize / 2.835,
+        inherit.aes = FALSE    # <- IMPORTANT
       )
   }
   

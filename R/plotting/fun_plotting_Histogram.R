@@ -30,7 +30,8 @@ fun_plotting_Histogram <- function(
       quantile_fun = median,
       alpha = 0.3,
       scale = 0.8,
-      linewidth = LineThickness
+      linewidth = LineThickness,
+      key_glyph = "path" 
     ) +
     scale_x_continuous(limits = c(NA, NA), expand = c(0, 0)) +
     labs(y = NULL, title = title)

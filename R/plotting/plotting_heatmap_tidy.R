@@ -170,6 +170,7 @@ plotting_heatmap_tidy <- function(
                                  grid_width = unit(fontsize, "pt"),
                                  grid_height = unit(fontsize * 5, "pt")
                                )
+                    
 
   )
   
@@ -185,14 +186,38 @@ plotting_heatmap_tidy <- function(
           base_df[[annot_var]] <- forcats::fct_inorder(base_df[[annot_var]])
         }
         
+        # Plot <- tidyHeatmap::annotation_tile(
+        #   Plot,
+        #   !!rlang::sym(annot_var),
+        #   palette = this_palette,
+        #   size = grid::unit(fontsize*1.2, "pt"),   # height of the annotation stripe itself
+        #   annotation_name_gp = grid::gpar(fontsize = fontsize_anno)
+        #   # show_legend = show_legend,
+        #   # # size of the legend keys (symbols)
+        #   # simple_anno_size = grid::unit(fontsize_anno, "pt")
+        # )
+        
         Plot <- tidyHeatmap::annotation_tile(
           Plot,
           !!rlang::sym(annot_var),
           palette = this_palette,
-          size = grid::unit(fontsize, "pt"),
+          size = grid::unit(fontsize, "pt"),                  # height of the annotation strip
           annotation_name_gp = grid::gpar(fontsize = fontsize_anno),
-          show_legend = show_legend
+          show_legend = show_legend,
+          
+          # size of the legend keys (colored squares)
+          simple_anno_size = grid::unit(fontsize_anno, "pt"),
+          
+          # control annotation legend text + symbol size
+          annotation_legend_param = list(
+            labels_gp  = grid::gpar(fontsize = fontsize_anno),        # label text
+            title_gp   = grid::gpar(fontsize = fontsize_anno),        # "Density", "Alginate"
+            grid_width = grid::unit(fontsize_anno, "pt"),       # width of squares
+            grid_height= grid::unit(fontsize_anno, "pt")        # height of squares
+          )
         )
+        
+        
       }
     }
   }

@@ -15,7 +15,9 @@ plot_summary_points <- function(
     pointsize = PointSize,
     linewidth = LineWidth,
     facet = NULL,
-    facet_scales = "fixed"
+    facet_scales = "fixed",
+    facet_nrow = NULL,
+    show_stat_summary = TRUE
 ) {
   
   # browser()
@@ -93,6 +95,39 @@ plot_summary_points <- function(
     #   shape = if (is.null(shape_var)) 21 else NULL,
     #   position = jitter_dodge
     # ) +
+    # if(show_stat_summary){
+    #   
+    # }
+    # stat_summary(
+    #   fun.data = mean_se,
+    #   geom = "errorbar",
+    #   linewidth = linewidth/2,
+    #   width = 0.2,
+    #   color = "black",
+    #   position = dodge,
+    #   show.legend = FALSE
+    # ) +
+    # stat_summary(
+    #   fun = mean,
+    #   geom = "crossbar",
+    #   linewidth = linewidth/2,
+    #   width = 0.4,
+    #   fatten = 2,
+    #   color = "black",
+    #   position = dodge,
+    #   show.legend = FALSE
+    # ) +
+    scale_y_continuous(limits = ylimits, expand = expansion(mult = c(0, 0.05))) +
+    theme_layout +
+    theme_fontsize(fontsize) +
+    theme(
+      legend.position = "none",
+      axis.title.x = element_blank(),
+      plot.title = element_text(hjust = 0.5)
+    )
+  
+  if(show_stat_summary) {
+    p <- p +
     stat_summary(
       fun.data = mean_se,
       geom = "errorbar",
@@ -102,24 +137,17 @@ plot_summary_points <- function(
       position = dodge,
       show.legend = FALSE
     ) +
-    stat_summary(
-      fun = mean,
-      geom = "crossbar",
-      linewidth = linewidth/2,
-      width = 0.4,
-      fatten = 2,
-      color = "black",
-      position = dodge,
-      show.legend = FALSE
-    ) +
-    scale_y_continuous(limits = ylimits, expand = expansion(mult = c(0, 0.05))) +
-    theme_layout +
-    theme_fontsize(fontsize) +
-    theme(
-      legend.position = "none",
-      axis.title.x = element_blank(),
-      plot.title = element_text(hjust = 0.5)
-    )
+      stat_summary(
+        fun = mean,
+        geom = "crossbar",
+        linewidth = linewidth/2,
+        width = 0.4,
+        fatten = 2,
+        color = "black",
+        position = dodge,
+        show.legend = FALSE
+      )
+  }
   
   # Only apply fill scale if fill_var was originally specified
   # if (!is.null(fill_var) && fill_var != "fill_dummy") {
@@ -176,7 +204,18 @@ plot_summary_points <- function(
     }
 
   if (!is.null(facet)) {
-    p <- p + facet_wrap(facets = facet, scales = facet_scales)
+    if (!is.null(facet_nrow)) {
+      p <- p + facet_wrap(
+        facets = facet,
+        scales = facet_scales,
+        nrow = facet_nrow
+      )
+    } else {
+      p <- p + facet_wrap(
+        facets = facet,
+        scales = facet_scales
+      )
+    }
   }
   
   # define legend symbols correctly. 

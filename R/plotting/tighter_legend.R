@@ -7,7 +7,7 @@ tighter_legend <- function(
 ) {
     theme(
       legend.position = position,
-      legend.box.margin = unit(0, "pt"),
+      legend.box.margin = margin(t=0, b=0, unit = "pt"),
       legend.margin = margin(t = 0, b = 0, r = 0, l = 0, unit = "mm"),
       legend.text = element_text(
         margin = margin(r = text_spacing_r, l = text_spacing_l, unit = "pt")

@@ -28,7 +28,7 @@ fun_plotting_Histogram <- function(
       fill = NA,
       quantile_lines = quantile_lines,
       quantile_fun = median,
-      alpha = 0.3,
+      alpha = 1,
       scale = 0.8,
       linewidth = LineThickness,
       key_glyph = "path" 

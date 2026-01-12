@@ -1,3 +1,29 @@
+# perm_test_fun <- function(data, formula, paired = FALSE, n_perm = 10000, ...) {
+#   # Handles grouped dfs (dplyr) and ungrouped
+#   is_grouped <- dplyr::is_grouped_df(data)
+#   
+#   if (is_grouped) {
+#     group_vars <- dplyr::group_vars(data)
+#     
+#     nested_data <- data %>%
+#       dplyr::group_by(!!!rlang::syms(group_vars)) %>%
+#       tidyr::nest()
+#     
+#     results <- nested_data %>%
+#       dplyr::mutate(
+#         test_result = purrr::map(data, ~ run_single_test(.x, formula, paired, n_perm))
+#       ) %>%
+#       # drop groups that yielded 0 rows cleanly
+#       dplyr::mutate(test_result = purrr::keep(test_result, ~ nrow(.x) >= 0)) %>%
+#       tidyr::unnest(test_result) %>%
+#       dplyr::ungroup()
+#     
+#     return(results)
+#   } else {
+#     return(run_single_test(data, formula, paired, n_perm))
+#   }
+# }
+
 perm_test_fun <- function(data, formula, paired = FALSE, n_perm = 10000, ...) {
   # Handles grouped dfs (dplyr) and ungrouped
   is_grouped <- dplyr::is_grouped_df(data)
@@ -7,15 +33,17 @@ perm_test_fun <- function(data, formula, paired = FALSE, n_perm = 10000, ...) {
     
     nested_data <- data %>%
       dplyr::group_by(!!!rlang::syms(group_vars)) %>%
-      tidyr::nest()
+      tidyr::nest() %>%
+      dplyr::rename(data_input = data)  # RENAME to avoid conflict
     
     results <- nested_data %>%
       dplyr::mutate(
-        test_result = purrr::map(data, ~ run_single_test(.x, formula, paired, n_perm))
+        test_result = purrr::map(data_input, ~ run_single_test(.x, formula, paired, n_perm))  # USE data_input
       ) %>%
       # drop groups that yielded 0 rows cleanly
       dplyr::mutate(test_result = purrr::keep(test_result, ~ nrow(.x) >= 0)) %>%
-      tidyr::unnest(test_result) %>%
+      tidyr::unnest(test_result) %>%  # NOW data only exists in test_result
+      dplyr::select(-data_input) %>%  # Remove the input data column if not needed
       dplyr::ungroup()
     
     return(results)

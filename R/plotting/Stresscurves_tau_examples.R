@@ -7,7 +7,8 @@ plot_stresscurve_tau <- function(
     facet_var = "PatientLetter", # for facet: for comb plot
     facet_scales = "free",
     color_var = "alginate", # for tau1 and tau2 plots
-    colors = Color.Gels # for tau1 and tau2 plots
+    colors = Color.Gels, # for tau1 and tau2 plots
+    LineWidth = 1
     ) {
   
   # browser()
@@ -72,7 +73,7 @@ Plot_stresscurves_comb <- df_tau_data_sliced %>%
     "stress_tau2" =  "#117733"
     )
   ) +
-  scale_x_continuous(limits = c(0,3000), expand = expansion((c(0,0)))) +
+  scale_x_continuous(limits = c(0,3000), expand = expansion((c(0.05,0)))) +
   labs(x="Time (s)", y = "Normalized stress") +
   theme_layout +
   theme_fontsize(FontSize) +
@@ -89,11 +90,11 @@ plotting_stresscurves_tau <- function(df, y_var) {
     ggplot(
       aes(x=!!sym(time_var), y= !!sym(y_var), color = !!sym(color_var), group = !!sym(Group))
     ) +
-    geom_path(linewidth = 1) +
+    geom_path(linewidth = LineWidth) +
     # scale_color_manual(values = pals::kelly()[-(1:2)]) +
     # scale_color_manual(values = RColorBrewer::brewer.pal(8, "Set1")) +
     scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0.05, 0))) +
-    labs(x="Time (s)", y = "Normalized stress", title = bquote(tau[.(tau_number)] * " : early phase stress relaxation")) +
+    labs(x="Time (s)", y = bquote("Normalized stress " * tau[.(tau_number)])) +# title = bquote(tau[.(tau_number)] * " : early phase stress relaxation")) +
     theme_layout +
     theme_fontsize(FontSize) +
     theme(plot.title = element_text(hjust = 0.5))

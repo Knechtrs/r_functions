@@ -97,9 +97,16 @@ add_stat_test_dodge <- function(
   
   # check if n>=3 for each group_vars, otherwise filter df and print message
   # summarise counts per group
-  tmp <- df %>%
-    group_by(!!!rlang::syms(group_vars)) %>%
-    summarise(n = n(), .groups = "drop")
+  
+  if (!is.null(Group) && is.null(Dodge)) {
+    tmp <- df %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(group_vars)), Group_col) %>%
+      dplyr::summarise(n = dplyr::n(), .groups = "drop")
+  } else {
+    tmp <- df %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(group_vars))) %>%
+      dplyr::summarise(n = dplyr::n(), .groups = "drop")
+  }
   
   # find which groups are too small
   low_n <- tmp %>% dplyr::filter(n <= 2)
@@ -108,13 +115,19 @@ add_stat_test_dodge <- function(
     message("Groups with n <= 2 were removed: ",
             paste(apply(low_n, 1, paste, collapse = " "), collapse = "; "))
     
-    # filter df to keep only groups with n > 2
-    df <- df %>%
-      inner_join(tmp %>% dplyr::filter(n > 2),
-                 by = group_vars)
+      # filter df to keep only groups with n > 2
+    if (!is.null(Group) && is.null(Dodge)) {
+      df <- df %>%
+        inner_join(tmp %>% dplyr::filter(n > 2),
+                   by = c(group_vars, "Group_col"))
+    } else {
+      df <- df %>%
+        inner_join(tmp %>% dplyr::filter(n > 2),
+                   by = c(group_vars))
+    }
   }
   
-
+  
   # Apply test
   if (length(group_vars) > 0) {
       stat.test <- df %>%
@@ -167,35 +180,40 @@ add_stat_test_dodge <- function(
       rename(data_nested = data) # rename to avoid stat_pvalue_manual conflict
   }
 
-  
-  # If permutation test and no Dodge provided: map group1/group2 to global x positions
-  if (test == "permutation" && is.null(Dodge)) {
-    x_levels <- levels(factor(plot$data[[Group]]))
+# If permutation test and no Dodge provided: map group1/group2 to global x positions
+  # After the permutation test initial setup
+  if (test == "permutation") {
     stat.test <- stat.test %>%
-      dplyr::mutate(
-        xmin = match(group1, x_levels),
-        xmax = match(group2, x_levels)
+      mutate(
+        xmin = 1,
+        xmax = 2,
+        yMax = map_dbl(data_nested, ~ max(.x$yData_col, na.rm = TRUE))*1.1,
+        p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
       )
+    
+    # If no Dodge: map to global x positions
+    if (is.null(Dodge)) {
+      x_levels <- levels(factor(plot$data[[Group]]))
+      stat.test <- stat.test %>%
+        dplyr::mutate(
+          xmin = match(group1, x_levels),
+          xmax = match(group2, x_levels)
+        )
+    }
+    
+    # If Dodge provided and stat_group_by used (Group == Dodge case)
+    if (!is.null(Dodge) && !is.null(stat_group_by)) {
+      dodge_w <- if (!is.null(dodge_width)) dodge_width else plot$layers[[2]]$position$width
+      
+      stat.test <- stat.test %>%
+        dplyr::mutate(
+          dodge_numeric = as.numeric(as.factor(stat_group_by)),  # Use the actual column name
+          xmin = dodge_numeric - dodge_w/2,
+          xmax = dodge_numeric + dodge_w/2
+        ) %>%
+        dplyr::select(-dodge_numeric)
+    }
   }
-  # if (test == "permutation" && !is.null(Dodge)) {
-  #   if(!is.null(stat_group_by)) {# group==dodge
-  #     stat.test <- stat.test %>%
-  #       mutate(
-  #         dodge_group = as.numeric(as.factor(stat_group_by)),
-  #         xmin = dodge_group - plot$layers[[2]]$position$width/2,
-  #         xmax = dodge_group + plot$layers[[2]]$position$width/2
-  #         ) %>%
-  #         select(!dodge_group)
-  #   } else if (is.null(stat_group_by) && !is.null(Dodge)) {# group != dodge
-  #     stat.test <- stat.test %>%
-  #       mutate(
-  #       dodge_group = as.numeric(as.factor(Dodge_col)),
-  #       xmin = dodge_group - plot$layers[[2]]$position$width/2,
-  #       xmax = dodge_group + plot$layers[[2]]$position$width/2
-  #       ) %>%
-  #       select(!dodge_group)
-  #     }
-  # }
   
   # top align yMax?
   if (top_align && nrow(stat.test) > 0) {
@@ -338,41 +356,6 @@ add_stat_test_dodge <- function(
 
   
   # add brackets?
-  # adjust y-positions?
-#  if (show_brackets && !is.null(stat.test) && nrow(stat.test) > 0) {
-#     
-#     y_range <- diff(range(plot$data[[yData]], na.rm = TRUE))
-#     
-#     stat.test <- stat.test %>%
-#       dplyr::group_by(dplyr::across(dplyr::all_of(Facet))) %>%
-#       dplyr::mutate(
-#         comp_rank = rank(yMax, ties.method = "first"),
-#         # raise BOTH label and bracket progressively
-#         yMax = yMax + (comp_rank - 1) * bracket_dist * y_range,
-#         y_bracket = yMax - 0.02 * y_range
-#       ) %>%
-#       dplyr::ungroup()
-#     
-#     Plot_out <- plot +
-#       ggplot2::geom_segment(
-#         data = stat.test,
-#         aes(x = xmin, xend = xmax,
-#             y = y_bracket, yend = y_bracket),
-#         inherit.aes = FALSE
-#       ) +
-#       ggpubr::stat_pvalue_manual(
-#         data = stat.test,
-#         label = "p_formatted",
-#         y.position = "yMax",  # now raised
-#         xmin = "xmin",
-#         xmax = "xmax",
-#         vjust = -0.25,
-#         linetype = "blank",
-#         tip.length = 0,
-#         size = FontSize / 2.835,
-#         inherit.aes = FALSE    # <- IMPORTANT
-#       )
-# }
   
   if (show_brackets && !is.null(stat.test) && nrow(stat.test) > 0) {
     

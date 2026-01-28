@@ -5,7 +5,7 @@ save_figure <- function(
     height_cm = NA,
     folder = "Output/Plots",
     file_type = c(".rds", ".png", ".pdf", ".svg"),
-    dpi = 300,
+    dpi = 600,
     scale = 1
 ) {
   # Create folder if missing

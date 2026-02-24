@@ -5,6 +5,8 @@ plot_paired_points <- function(
     yaxis_trans = NULL, # e.g. ln or log
     fillvar = NULL, # variable for fill color
     colorvar = NULL, # varibale for color. Shouldn't be NULL!
+    shape_var = NULL, # define column for shape
+    shape_values = c(21, 24), # shape symbols
     connectVar1, # variable for connecting: within dodge
     connectVar2 = NULL, # variable 2 for connecting: ensures not across group
     use_dodge = FALSE, # set TRUE, if dodging
@@ -86,11 +88,52 @@ plot_paired_points <- function(
   }
   
   # Only apply color scale if colorvar was originally specified
-  if (!is.null(fillvar) && fillvar != "fill_dummy") {
-    p <- p + geom_point(shape = 21, size = pointsize, position= dodge)
-  } else {
-    p <- p + geom_point(shape = 21, size = pointsize, fill = "white", position= dodge)
-  }
+  # if (!is.null(fillvar) && fillvar != "fill_dummy") {
+  #   p <- p + geom_point(shape = 21, size = pointsize, position= dodge)
+  # } else {
+  #   p <- p + geom_point(shape = 21, size = pointsize, fill = "white", position= dodge)
+  # }
+    
+    # points
+    if (!is.null(shape_var)) {
+      
+      # mapped shape
+      if (!is.null(fillvar) && fillvar != "fill_dummy") {
+        p <- p + geom_point(
+          aes(shape = !!sym(shape_var)),
+          size = pointsize,
+          position = dodge
+        )
+      } else {
+        p <- p + geom_point(
+          aes(shape = !!sym(shape_var)),  
+          size = pointsize,
+          fill = "white",
+          position = dodge
+        )
+      }
+      
+      p <- p + scale_shape_manual(values = shape_values)
+      
+    } else {
+      
+      # fixed shape
+      if (!is.null(fillvar) && fillvar != "fill_dummy") {
+        p <- p + geom_point(
+          shape = 21,
+          size = pointsize,
+          position = dodge
+        )
+      } else {
+        p <- p + geom_point(
+          shape = 21,
+          size = pointsize,
+          fill = "white",
+          position = dodge
+        )
+      }
+      
+    }
   
   # Remaining plot layers
   p <- p +

@@ -74,12 +74,12 @@ plot_summary_points <- function(
   # create geom_jitter layer with and without shape option
   if (is.null(shape_var)) {
     geom_layer <- geom_jitter(
-      size = pointsize, shape = 21, alpha = 0.8, color = "black",
+      size = pointsize, shape = 21, alpha = 0.8, color = "black", 
       position = jitter_dodge
     )
   } else {
     geom_layer <- geom_jitter(
-      size = pointsize, alpha = 0.8, color = "black",
+      size = pointsize, alpha = 0.8, color = "black", 
       position = jitter_dodge
     )
   }
@@ -88,35 +88,6 @@ plot_summary_points <- function(
   # Base plot
   p <- ggplot(data, do.call(aes, aes_args)) +
     geom_layer +
-    # geom_jitter(
-    #   size = pointsize,
-    #   alpha = 0.8,
-    #   color = "black",
-    #   shape = if (is.null(shape_var)) 21 else NULL,
-    #   position = jitter_dodge
-    # ) +
-    # if(show_stat_summary){
-    #   
-    # }
-    # stat_summary(
-    #   fun.data = mean_se,
-    #   geom = "errorbar",
-    #   linewidth = linewidth/2,
-    #   width = 0.2,
-    #   color = "black",
-    #   position = dodge,
-    #   show.legend = FALSE
-    # ) +
-    # stat_summary(
-    #   fun = mean,
-    #   geom = "crossbar",
-    #   linewidth = linewidth/2,
-    #   width = 0.4,
-    #   fatten = 2,
-    #   color = "black",
-    #   position = dodge,
-    #   show.legend = FALSE
-    # ) +
     scale_y_continuous(limits = ylimits, expand = expansion(mult = c(0, 0.05))) +
     theme_layout +
     theme_fontsize(fontsize) +
@@ -149,16 +120,7 @@ plot_summary_points <- function(
       )
   }
   
-  # Only apply fill scale if fill_var was originally specified
-  # if (!is.null(fill_var) && fill_var != "fill_dummy") {
-  #   if (is.character(colors) && length(colors) == 1 && colors %in% rownames(RColorBrewer::brewer.pal.info)) {
-  #     n_groups <- length(unique(data[[fill_var]]))
-  #     if (n_groups<3) {n_groups <- 3}
-  #     p <- p + scale_fill_manual(values = RColorBrewer::brewer.pal(n_groups, colors))
-  #   } else {
-  #     p <- p + scale_fill_manual(values = colors)
-  #   }
-  # }
+
   
   if (!is.null(fill_var) && fill_var != "fill_dummy") {
     n_groups <- length(unique(data[[fill_var]]))

@@ -15,6 +15,7 @@ add_stat_test_dodge <- function(
     adjust_y_position = FALSE, # set TRUE, if additional space between labels is needed
     expand_y_0 = TRUE,
     lower_ylimit = 0,
+    pval_gap = 1,   # extra space above max(data), in y units
     expand_lower_y_mult = 0,
     show_brackets = FALSE, # show lines comparing groups?
     bracket_dist = NULL, # increase space between brackets in y-axis units. needs to be set!
@@ -146,7 +147,7 @@ add_stat_test_dodge <- function(
       rstatix::add_significance() %>%
       add_xy_position(x = "stat_group_by", fun = "max", dodge = if (!is.null(dodge_width)) dodge_width else plot$layers[[2]]$position$width) %>%
       dplyr::mutate(
-        yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
+        yMax = if (!is.null(yPosition)) yPosition else y.position * pval_gap * 1.05,
         p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
       )
   } else if (test != "permutation" && !is.null(Dodge)) { # if dodge != group
@@ -154,7 +155,7 @@ add_stat_test_dodge <- function(
       rstatix::add_significance() %>%
       add_xy_position(x = "Group_col", fun = "max", group= "Dodge_col", dodge = if (!is.null(dodge_width)) dodge_width else plot$layers[[2]]$position$width) %>%
       dplyr::mutate(
-        yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
+        yMax = if (!is.null(yPosition)) yPosition else y.position * pval_gap * 1.05,
         p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
       )
   } else if (test != "permutation" && is.null(Dodge)) { # no dodge!
@@ -162,7 +163,7 @@ add_stat_test_dodge <- function(
       rstatix::add_significance() %>%
       add_xy_position(fun = "max") %>%
       dplyr::mutate(
-        yMax = if (!is.null(yPosition)) yPosition else y.position * 1.05,
+        yMax = if (!is.null(yPosition)) yPosition else y.position * pval_gap * 1.05,
         p_formatted = if (!is.null(format_pvalue_dif)) format_pvalue_dif(p) else format_pvalue(p)
       )
   }
@@ -305,7 +306,7 @@ add_stat_test_dodge <- function(
       stat.test <- stat.test %>%
         dplyr::left_join(y_max_per_facet, by = c("Facet_col", "stat_group_by")) %>%
         mutate(
-          yMax = if (!is.null(yPosition)) yPosition else y_max * 1.05 ) %>% # 1.05 adds little space between max value and bracket.
+          yMax = if (!is.null(yPosition)) yPosition else y_max * pval_gap * 1.05 ) %>% # 1.05 adds little space between max value and bracket.
         select(-y_max)
 
     } else { # if dodge != group
@@ -318,7 +319,7 @@ add_stat_test_dodge <- function(
       stat.test <- stat.test %>%
         dplyr::left_join(y_max_per_facet, by = "Facet_col") %>%
         mutate(
-          yMax = if (!is.null(yPosition)) yPosition else y_max * 1.05 ) %>% # 1.05 adds little space between max value and bracket.
+          yMax = if (!is.null(yPosition)) yPosition else y_max * pval_gap * 1.05 ) %>% # 1.05 adds little space between max value and bracket.
         select(-y_max)
     }
   }

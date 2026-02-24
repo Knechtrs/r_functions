@@ -8,7 +8,7 @@ Theme_Histogramy <- function(){
     panel.grid.minor=element_line(color="grey90", linewidth=0.1),
     # axis.line=element_line(color="black"),
     axis.line = element_blank(),
-    axis.text.x=element_text(angle=45, hjust=1, color="black"),
+    axis.text.x=element_text(angle=0, hjust=1, color="black"),
     axis.text.y= element_text(hjust=1,vjust=0, color="black"),
     axis.ticks.y=element_blank(),
     strip.background = element_blank(),  # Remove gray background

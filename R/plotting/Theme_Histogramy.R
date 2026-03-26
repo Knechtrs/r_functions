@@ -12,7 +12,7 @@ Theme_Histogramy <- function(){
     axis.text.y= element_text(hjust=1,vjust=0, color="black"),
     axis.ticks.y=element_blank(),
     strip.background = element_blank(),  # Remove gray background
-    strip.text = element_text(face = "bold",margin = margin(b = 10, l=10)),  # Make title bold of facet_wraps
+    strip.text = element_text(face = "bold",margin = margin(b = 3, l=10)),  # Make title bold of facet_wraps
     plot.title = element_text(hjust = 0.5, face = "bold"),
     # panel.grid.major.y = element_line(color = "black", linetype = "solid"),  # Add horizontal gridlines
     # panel.spacing = unit(0.8, "lines"), # controls don't make it too small. If smaller is desired, use geom_vline

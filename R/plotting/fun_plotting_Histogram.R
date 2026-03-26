@@ -19,13 +19,22 @@ fun_plotting_Histogram <- function(
       mutate({{yvar1}} := forcats::fct_rev(as_factor({{yvar1}})))
   }
   
-  # Create explicit grouping variable that combines GroupVar with other factors
-  if (!is.null(substitute(GroupVar))) {
+  # # Create explicit grouping variable that combines GroupVar with other factors
+  has_group <- !rlang::quo_is_null(rlang::enquo(GroupVar))
+  has_line  <- !rlang::quo_is_null(rlang::enquo(LineVar))
+  
+  if (has_group && has_line) {
     data <- data %>%
-      mutate(.group_var = interaction({{yvar1}}, {{ColorVar}}, {{GroupVar}}, drop = TRUE))
+      dplyr::mutate(.group_var = interaction({{yvar1}}, {{ColorVar}}, {{GroupVar}}, {{LineVar}}, drop = TRUE))
+  } else if (has_group) {
+    data <- data %>%
+      dplyr::mutate(.group_var = interaction({{yvar1}}, {{ColorVar}}, {{GroupVar}}, drop = TRUE))
+  } else if (has_line) {
+    data <- data %>%
+      dplyr::mutate(.group_var = interaction({{yvar1}}, {{ColorVar}}, {{LineVar}}, drop = TRUE))
   } else {
     data <- data %>%
-      mutate(.group_var = interaction({{yvar1}}, {{ColorVar}}, drop = TRUE))
+      dplyr::mutate(.group_var = interaction({{yvar1}}, {{ColorVar}}, drop = TRUE))
   }
   
   p <- ggplot(data, aes(
@@ -36,7 +45,9 @@ fun_plotting_Histogram <- function(
     group = .group_var  # Use the explicit grouping variable
   )) +
     ggridges::geom_density_ridges(
-      aes(height = after_stat(ndensity)),
+      aes(
+        height = after_stat(ndensity)
+          ),
       fill = NA,
       quantile_lines = quantile_lines,
       quantile_fun = median,

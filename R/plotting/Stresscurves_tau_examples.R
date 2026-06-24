@@ -45,6 +45,9 @@ list_tau_data <- pmap(
         stress_tau2 = (A2 * exp(-t / tau2)) / norm_den,
         stress_tau_comb = 1 - (sigma0 * (A1 * (1 - exp(-t / tau1)) +
                                            A2 * (1 - exp(-t / tau2))))
+        # stress_tau1 = (A1 * exp(-t / tau1)) / norm_den,
+        # stress_tau2 = (A2 * exp(-t / tau2)) / norm_den,
+        # stress_tau_comb = (A1 * exp(-t / tau1) + A2 * exp(-t / tau2)) / norm_den
       )
   }
 )

@@ -25,7 +25,8 @@ add_stat_test_dodge <- function(
     effectsize_type = "g",       # "d" = Cohens: stand. mean difference (like z-score), "g = Hedges g: n<20", or "r = Wilcoxon r: with Wilcoxon test"
     method_sd = "z", # ("rm", "av", "z", "b", "d", "r") see help
     remove_comp_g1 = NULL, # remove specific comparison from stat.test df: group1
-    remove_comp_g2 = NULL # remove specific comparison from stat.test df: group2
+    remove_comp_g2 = NULL, # remove specific comparison from stat.test df: group2
+    ref_group = NULL # comparison to ref group
     ) {
   
   # browser()
@@ -129,13 +130,40 @@ add_stat_test_dodge <- function(
   }
   
   
+  # ensure correct df order for paired testing
+  # (runs AFTER group_vars is defined)
+  if (paired && !is.null(id)) {
+    
+    # drop donors that don't have both levels of Group_col
+    df <- df %>%
+      dplyr::group_by(dplyr::across(dplyr::all_of(c(group_vars, "ID_Col")))) %>%
+      dplyr::filter(dplyr::n_distinct(Group_col) == 2) %>%
+      dplyr::ungroup()
+    
+    # sort so paired rows align correctly for rstatix
+    df <- df %>%
+      dplyr::arrange(
+        dplyr::across(dplyr::all_of(group_vars)),
+        ID_Col,
+        Group_col
+      )
+  }
+  
   # Apply test
+  # if (length(group_vars) > 0) {
+  #     stat.test <- df %>%
+  #       dplyr::group_by(across(all_of(group_vars))) %>%
+  #       test_fun(formula, paired = paired)
+  # } else {
+  #     stat.test <- test_fun(df, formula, paired = paired)
+  # }
+  
   if (length(group_vars) > 0) {
-      stat.test <- df %>%
-        dplyr::group_by(across(all_of(group_vars))) %>%
-        test_fun(formula, paired = paired)
+    stat.test <- df %>%
+      dplyr::group_by(across(all_of(group_vars))) %>%
+      test_fun(formula, paired = paired, ref.group = ref_group)
   } else {
-      stat.test <- test_fun(df, formula, paired = paired)
+    stat.test <- test_fun(df, formula, paired = paired, ref.group = ref_group)
   }
   
 
@@ -367,8 +395,10 @@ add_stat_test_dodge <- function(
       dplyr::mutate(
         comp_rank = rank(yMax, ties.method = "first"),
         # raise BOTH label and bracket progressively
-        yMax = yMax + (comp_rank - 1) * bracket_dist * y_range,
-        y_bracket = yMax - 0.02 * y_range
+        # yMax = yMax + (comp_rank - 1) * bracket_dist * y_range,
+        # y_bracket = yMax - 0.02 * y_range
+        y_bracket = yMax + (comp_rank - 1) * bracket_dist * y_range,
+        yMax = y_bracket + 0.01 * y_range   # small offset for label above bracket
       ) %>%
       dplyr::ungroup()
     

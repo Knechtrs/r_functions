@@ -82,9 +82,9 @@ plot_paired_points <- function(
   
   # Conditional line layer
   if (!is.null(connectVar2)) {
-    p <- p + geom_line(aes(group = interaction(!!sym(connectVar1), !!sym(connectVar2))), color = "black")
+    p <- p + geom_line(aes(group = interaction(!!sym(connectVar1), !!sym(connectVar2))), color = "black", linewidth = linewidth)
   } else {
-    p <- p + geom_line(aes(group = !!sym(connectVar1)), color = "black")
+    p <- p + geom_line(aes(group = !!sym(connectVar1)), color = "black", linewidth = linewidth)
   }
   
   # Only apply color scale if colorvar was originally specified

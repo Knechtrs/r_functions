@@ -17,7 +17,10 @@ plot_summary_points <- function(
     facet = NULL,
     facet_scales = "fixed",
     facet_nrow = NULL,
-    show_stat_summary = TRUE
+    show_stat_summary = TRUE,
+    stat_summary_color = "black",
+    stat_summary_width = 0.4,
+    stat_summary_linewidth_factor = 3
 ) {
   
   # browser()
@@ -102,19 +105,19 @@ plot_summary_points <- function(
     stat_summary(
       fun.data = mean_se,
       geom = "errorbar",
-      linewidth = linewidth/2,
-      width = 0.2,
-      color = "black",
+      linewidth = linewidth/(stat_summary_linewidth_factor*1.3),
+      width = stat_summary_width/2,
+      color = stat_summary_color,
       position = dodge,
       show.legend = FALSE
     ) +
       stat_summary(
         fun = mean,
         geom = "crossbar",
-        linewidth = linewidth/2,
-        width = 0.4,
+        linewidth = linewidth/stat_summary_linewidth_factor,
+        width = stat_summary_width,
         fatten = 2,
-        color = "black",
+        color = stat_summary_color,
         position = dodge,
         show.legend = FALSE
       )

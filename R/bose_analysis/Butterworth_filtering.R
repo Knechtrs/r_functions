@@ -5,22 +5,22 @@ butterworth_filtering <- function(
     load = "Load",    # name of column with load data (string)
     time = "Time",    # name of column with time data (string)
     id = "exp" # sample identifier
-) {
+  ) {
   # Define Butterworth filter parameters
   order <- 2 #params$FilterParams$order     # e.g., 4
   cutoff_freq <- 0.1 # params$FilterParams$cutoff  # e.g., 10 Hz
   
-  # Get only stress-relaxation portion of the data
-  df_data <- df_data %>%
-    group_by(exp) %>%
-    mutate(
-      max_time = .data[[time]][which.max(.data[[load]])]
-    ) %>%
-    dplyr::filter(.data[[time]] > max_time) %>%
-    mutate(
-      !!time := .data[[time]] - max_time  # reset time to zero at max load
-    ) %>%
-    ungroup()
+  # # Get only stress-relaxation portion of the data
+  # df_data <- df_data %>%
+  #   group_by(exp) %>%
+  #   mutate(
+  #     max_time = .data[[time]][which.max(.data[[load]])]
+  #   ) %>%
+  #   dplyr::filter(.data[[time]] > max_time) %>%
+  #   mutate(
+  #     !!time := .data[[time]] - max_time  # reset time to zero at max load
+  #   ) %>%
+  #   ungroup()
 
 # # quickly check data
 # print(plot_load_time(data_StressRelax))
@@ -57,7 +57,8 @@ detach("package:signal", unload = TRUE)
 #---- normalize to load ----#
 df_data <- df_data %>%
   group_by(!!sym(id)) %>%
-  mutate(load_norm = load_BF / max(load_BF, na.rm = TRUE)) %>%  # Normalize to load_BF
+  mutate(load_norm = load_BF / first(load_BF)) %>%  # Normalize to load_BF
+  # mutate(load_norm = load_BF / max(load_BF, na.rm = TRUE)) %>%  # Normalize to load_BF
   ungroup()
 
 return(df_data)

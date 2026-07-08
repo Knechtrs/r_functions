@@ -15,6 +15,30 @@ emod_analysis <- function(
 ) {
   
   # browser()
+  
+  # If gel_height is a column name, use that column.
+  # If it is numeric, create a constant column.
+  if (is.character(gel_height) && gel_height %in% names(df_data)) {
+    df_data <- df_data %>%
+      mutate(.gel_height = .data[[gel_height]])
+  } else if (is.numeric(gel_height) && length(gel_height) == 1) {
+    df_data <- df_data %>%
+      mutate(.gel_height = gel_height)
+  } else {
+    stop("gel_height must be either a numeric value or a valid column name.")
+  }
+  
+  # Same for gel_r
+  if (is.character(gel_r) && gel_r %in% names(df_data)) {
+    df_data <- df_data %>%
+      mutate(.gel_r = .data[[gel_r]])
+  } else if (is.numeric(gel_r) && length(gel_r) == 1) {
+    df_data <- df_data %>%
+      mutate(.gel_r = gel_r)
+  } else {
+    stop("gel_r must be either a numeric value or a valid column name.")
+  }
+  
   #---- calculate stress and strain ----#
   data_emod <- df_data %>%
     group_by(!!sym(id)) %>%
@@ -22,8 +46,8 @@ emod_analysis <- function(
     filter(!!sym(time) < max_time) %>%
     mutate(
       !!sym(disp) := max(!!sym(disp)) - !!sym(disp),
-      strain = !!sym(disp) / gel_height,
-      stress = (!!sym(load)*1e-3 * 9.81 / (pi * (gel_r*1e-3)^2))/1e3 # convert load in g to kg and mm to m and divide by 1000 to get kPa
+      strain = !!sym(disp) / .gel_height,
+      stress = (!!sym(load)*1e-3 * 9.81 / (pi * (.gel_r*1e-3)^2))/1e3 # convert load in g to kg and mm to m and divide by 1000 to get kPa
     ) %>%
     ungroup()
   

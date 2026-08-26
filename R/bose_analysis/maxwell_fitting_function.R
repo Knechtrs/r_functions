@@ -33,11 +33,17 @@ maxwell_fitting_function <- function(
       list(tau = 500, A = 0.8)
     )
   } else {
+    # starting_values <- list(
+    #   list(tau1 = 70, tau2 = 1500, A1 = 0.3, A2 = 0.7),
+    #   list(tau1 = 200, tau2 = 1000, A1 = 0.4, A2 = 0.5),
+    #   list(tau1 = 10, tau2 = 200, A1 = 0.4, A2 = 0.5)
+    # )
     starting_values <- list(
-      list(tau1 = 70, tau2 = 1500, A1 = 0.3, A2 = 0.7),
-      list(tau1 = 200, tau2 = 1000, A1 = 0.4, A2 = 0.5),
-      list(tau1 = 10, tau2 = 200, A1 = 0.4, A2 = 0.5)
-      
+      list(tau1 = 1,   tau2 = 100,  A1 = 0.1, A2 = 0.2),
+      list(tau1 = 5,   tau2 = 500,  A1 = 0.2, A2 = 0.3),
+      list(tau1 = 10,  tau2 = 1000, A1 = 0.2, A2 = 0.4),
+      list(tau1 = 50,  tau2 = 2000, A1 = 0.3, A2 = 0.3),
+      list(tau1 = 100, tau2 = 5000, A1 = 0.2, A2 = 0.4)
     )
   }
   
@@ -72,7 +78,11 @@ maxwell_fitting_function <- function(
         best_error <- current_error
         best_fit <- test_fit
       }
-    }, error = function(e) {
+    }, 
+    # error = function(e) { # uncomment this for trouble shooting
+    #   message("Fit failed: ", e$message)
+    # })
+    error = function(e) {
       # Silent failure
     })
   }

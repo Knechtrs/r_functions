@@ -6,6 +6,8 @@ maxwell_fitting_function <- function(
     model_type = "two" # one or two element model
     ) {
   
+  # browser()
+  
   # df = list_df[[1]] %>% drop_units(.)
   # time = "Time"
   # fit_var = "Load_norm"
@@ -47,44 +49,62 @@ maxwell_fitting_function <- function(
     )
   }
   
-  # Try each set of starting values
   best_fit <- NULL
   best_error <- Inf
   
   for (start_values in starting_values) {
+    
     tryCatch({
+      
       if (model_type == "one") {
+        
         test_fit <- nlsLM(
-          formula = as.formula(paste(fit_var, "~ maxwell_model_one(", time, ", tau, A)")),
+          formula = as.formula(
+            paste(fit_var, "~ maxwell_model_one(", time, ", tau, A)")
+          ),
           data = df,
           start = start_values,
           lower = c(0.001, 0.001),
           upper = c(Inf, 1),
           control = nls.lm.control(maxiter = 1000)
         )
+        
       } else {
+        
         test_fit <- nlsLM(
-          formula = as.formula(paste(fit_var, "~ maxwell_model_two(", time, ", tau1, tau2, A1, A2)")),
+          formula = as.formula(
+            paste(
+              fit_var,
+              "~ maxwell_model_two(",
+              time,
+              ", tau1, tau2, A1, A2)"
+            )
+          ),
           data = df,
           start = start_values,
           lower = c(0, 0, 0, 0),
           upper = c(Inf, Inf, 1, 1),
-          control = nls.lm.control(maxiter = 500)
+          control = nls.lm.control(maxiter = 1000)
         )
       }
       
-      current_error <- sum((df[[fit_var]] - predict(test_fit))^2)
+      current_error <- sum(
+        (df[[fit_var]] - predict(test_fit))^2
+      )
+      
       if (current_error < best_error) {
         best_error <- current_error
         best_fit <- test_fit
       }
-    }, 
-    # error = function(e) { # uncomment this for trouble shooting
-    #   message("Fit failed: ", e$message)
-    # })
-    error = function(e) {
-      # Silent failure
+      
+    }, error = function(e) {
+      # ignore individual failed starting values
     })
+  }
+  
+  if (is.null(best_fit)) {
+    message("Fit failed for all starting values")
+    return(NULL)
   }
   
   if (is.null(best_fit)) return(NULL)

@@ -9,7 +9,6 @@ maxwell_main_analysis <- function(
   
 # Clean and split data by experimental groups and name list items
   list_df <- df %>%
-    na.omit() %>%
     droplevels() %>%
     group_by(across(all_of(id))) %>%
     filter(!!sym(time) <= .env$t_max) # ensure fit is only until t_max

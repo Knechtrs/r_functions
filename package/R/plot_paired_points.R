@@ -16,19 +16,17 @@ plot_paired_points <- function(
     fill_colors = colors,
     ylimits = c(0, NA),
     expand_lower_y_mult = 0,
-    fontsize = FontSize,
-    pointsize = PointSize,
-    linewidth = LineWidth,
+    fontsize = getOption("ktools.fontsize", 7),
+    pointsize = getOption("ktools.pointsize", 1),
+    linewidth = getOption("ktools.linewidth", 1),
     facet = NULL, # variable for faceting or set to NULL
     facet_scales = "free",
     nrow_facets = NULL,
     base_family = "Arial"
 ) {
-  
-  require(ggplot2)
-  require(dplyr)
-  require(rlang)
-  
+
+
+
   # If xvar is NULL, use a constant "All"
   if (is.null(xvar)) {
     data <- data %>%

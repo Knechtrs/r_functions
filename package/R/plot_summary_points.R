@@ -11,9 +11,9 @@ plot_summary_points <- function(
     jitter_width = 0.1,
     colors = "grey", # color vector for groups
     ylimits = c(0, NA),
-    fontsize =FontSize,
-    pointsize = PointSize,
-    linewidth = LineWidth,
+    fontsize = getOption("ktools.fontsize", 7),
+    pointsize = getOption("ktools.pointsize", 1),
+    linewidth = getOption("ktools.linewidth", 1),
     facet = NULL,
     facet_scales = "fixed",
     facet_nrow = NULL,
@@ -24,11 +24,9 @@ plot_summary_points <- function(
 ) {
   
   # browser()
-  
-  require(ggplot2)
-  require(dplyr)
-  require(rlang)
-  
+
+
+
   data <- data %>% droplevels()
   
   # If xvar is NULL, use a constant "All"
@@ -135,7 +133,7 @@ plot_summary_points <- function(
         pal_vals <- RColorBrewer::brewer.pal(min(max(n_groups, 3), 9), colors)
         
         # --- Case 2: pals palette ---
-      } else if (colors %in% ls("package:pals")) {
+      } else if (colors %in% getNamespaceExports("pals")) {
         pal_fun <- get(colors, envir = asNamespace("pals"))
         pal_vals <- pal_fun(max(n_groups, 3))
         

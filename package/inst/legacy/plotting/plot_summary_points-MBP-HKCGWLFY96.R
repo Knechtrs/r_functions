@@ -17,10 +17,7 @@ plot_summary_points <- function(
     facet = NULL,
     facet_scales = "fixed",
     facet_nrow = NULL,
-    show_stat_summary = TRUE,
-    stat_summary_color = "black",
-    stat_summary_width = 0.4,
-    stat_summary_linewidth_factor = 3
+    show_stat_summary = TRUE
 ) {
   
   # browser()
@@ -105,19 +102,19 @@ plot_summary_points <- function(
     stat_summary(
       fun.data = mean_se,
       geom = "errorbar",
-      linewidth = linewidth/(stat_summary_linewidth_factor*1.3),
-      width = stat_summary_width/2,
-      color = stat_summary_color,
+      linewidth = linewidth/2,
+      width = 0.2,
+      color = "black",
       position = dodge,
       show.legend = FALSE
     ) +
       stat_summary(
         fun = mean,
         geom = "crossbar",
-        linewidth = linewidth/stat_summary_linewidth_factor,
-        width = stat_summary_width,
+        linewidth = linewidth/2,
+        width = 0.4,
         fatten = 2,
-        color = stat_summary_color,
+        color = "black",
         position = dodge,
         show.legend = FALSE
       )
@@ -169,13 +166,19 @@ plot_summary_points <- function(
     }
 
   if (!is.null(facet)) {
-    # if (!is.null(facet_nrow)) {
+    if (!is.null(facet_nrow)) {
       p <- p + facet_wrap(
         facets = facet,
         scales = facet_scales,
         nrow = facet_nrow
       )
-    } 
+    } else {
+      p <- p + facet_wrap(
+        facets = facet,
+        scales = facet_scales
+      )
+    }
+  }
   
   # define legend symbols correctly. 
   p <- p + guides(

@@ -979,7 +979,7 @@ add_stat_test_dodge <- function(
         vjust = -0.25,
         linetype = "blank",
         tip.length = 0,
-        size = FontSize / 2.835,
+        size = getOption("ktools.fontsize", 7) / 2.835,
         inherit.aes = FALSE
       )
     
@@ -1016,7 +1016,7 @@ add_stat_test_dodge <- function(
         vjust = -0.25,
         linetype = linetype_val,
         tip.length = tip_length_val,
-        size = FontSize / 2.835
+        size = getOption("ktools.fontsize", 7) / 2.835
       )
   }
   
